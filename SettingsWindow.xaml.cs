@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using System.Windows.Input;
 
 namespace DeskOp
 {
@@ -63,6 +64,12 @@ namespace DeskOp
                     OnPluginImported?.Invoke(file);
                 }
             }
+        }
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
