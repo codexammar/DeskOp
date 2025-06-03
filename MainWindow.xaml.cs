@@ -17,6 +17,7 @@ namespace DeskOp
         private double _hoverDimOpacity = 0.7;
         private double _fullOpacity = 1.0;
         private TimeSpan _fadeDuration = TimeSpan.FromMilliseconds(120);
+        private string _currentThemeMode = "dark"; // or "light"
 
         public MainWindow()
         {
@@ -33,12 +34,18 @@ namespace DeskOp
         {
             var settingsWindow = new SettingsWindow();
             settingsWindow.Owner = this;
-            settingsWindow.OnThemeSelected = ApplyTheme;
+
+            settingsWindow.OnBackgroundThemeSelected = ApplyButtonBackground;
+            settingsWindow.OnSelectedButtonColorSelected = ApplySelectedHighlight;
+            settingsWindow.OnThemeModeChanged = ApplyThemeMode;
+
             settingsWindow.ShowDialog();
         }
 
-        public void ApplyTheme(Brush backgroundBrush)
+        private void ApplyButtonBackground(Brush brush)
         {
+            _defaultBrush = brush;
+
             foreach (var child in LogicalTreeHelper.GetChildren(this))
             {
                 if (child is Border border)
@@ -49,35 +56,73 @@ namespace DeskOp
                         {
                             foreach (var element in panel.Children)
                             {
-                                if (element is Button btn)
-                                {
-                                    if (btn != _selectedButton)
-                                    {
-                                        btn.Background = backgroundBrush;
-                                    }
-                                }
+                                if (element is Button btn && btn != _selectedButton)
+                                    btn.Background = _defaultBrush;
                             }
                         }
                     }
                 }
             }
 
-            _defaultBrush = backgroundBrush;
             if (_selectedButton is not null)
                 _selectedButton.Background = _selectedBrush;
+        }
+
+        private void ApplySelectedHighlight(Brush brush)
+        {
+            _selectedBrush = brush;
+
+            if (_selectedButton is not null)
+            {
+                var animatedBrush = new SolidColorBrush(((SolidColorBrush)_selectedButton.Background).Color);
+                _selectedButton.Background = animatedBrush;
+
+                var animation = new ColorAnimation
+                {
+                    To = ((SolidColorBrush)_selectedBrush).Color,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new QuadraticEase()
+                };
+
+                animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
+            }
+        }
+
+        private void ApplyThemeMode(string mode)
+        {
+            _currentThemeMode = mode;
+            bool isLight = mode == "light";
+
+            var bg = isLight ? Brushes.White : (Brush)new BrushConverter().ConvertFrom("#CC1E1E1E")!;
+            var fg = isLight ? Brushes.Black : Brushes.White;
+
+            if (Content is Border root)
+            {
+                root.Background = bg;
+
+                if (root.Child is WrapPanel wrap)
+                {
+                    foreach (var child in wrap.Children)
+                    {
+                        if (child is Button btn)
+                        {
+                            btn.Foreground = fg;
+
+                            if (btn != _selectedButton)
+                                btn.Background = _defaultBrush;
+                        }
+                    }
+                }
+            }
         }
 
         private void ModeButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button clickedButton)
             {
-                // Reset previous selection
                 if (_selectedButton is not null)
-                {
                     _selectedButton.Background = _defaultBrush;
-                }
 
-                // Animate to selection color
                 _selectedButton = clickedButton;
                 var startColor = ((SolidColorBrush)_selectedButton.Background).Color;
                 var targetColor = ((SolidColorBrush)_selectedBrush).Color;
