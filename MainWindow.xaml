@@ -44,14 +44,6 @@
                                     <ContentPresenter HorizontalAlignment="Center"
                                                       VerticalAlignment="Center"/>
                                 </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Border" Property="Background" Value="#3A3D41"/>
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="Border" Property="Background" Value="#1F1F1F"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
@@ -59,28 +51,44 @@
             </WrapPanel.Resources>
 
             <!-- 🎮 Buttons -->
-            <Button Style="{StaticResource ModeButtonStyle}" Click="ModeButton_Click" Tag="Games">
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="Games"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                     <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center"/>
                     <TextBlock Text="Games" FontSize="12"/>
                 </StackPanel>
             </Button>
 
-            <Button Style="{StaticResource ModeButtonStyle}" Click="ModeButton_Click" Tag="Productivity">
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="Productivity"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                     <TextBlock Text="💼" FontSize="20" HorizontalAlignment="Center"/>
                     <TextBlock Text="Productivity" FontSize="12"/>
                 </StackPanel>
             </Button>
 
-            <Button Style="{StaticResource ModeButtonStyle}" Click="ModeButton_Click" Tag="None">
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="None"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                     <TextBlock Text="🚫" FontSize="20" HorizontalAlignment="Center"/>
                     <TextBlock Text="None" FontSize="12"/>
                 </StackPanel>
             </Button>
 
-            <Button Style="{StaticResource ModeButtonStyle}" Click="ModeButton_Click" Tag="All">
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="All"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                     <TextBlock Text="🧩" FontSize="20" HorizontalAlignment="Center"/>
                     <TextBlock Text="All" FontSize="12"/>

@@ -5,12 +5,18 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 
 namespace DeskOp
 {
     public partial class MainWindow : Window
     {
         private Button? _selectedButton;
+        private Brush _defaultBrush = (Brush)new BrushConverter().ConvertFrom("#292B2F")!;
+        private Brush _selectedBrush = (Brush)new BrushConverter().ConvertFrom("#2ECC71")!;
+        private double _hoverDimOpacity = 0.7;
+        private double _fullOpacity = 1.0;
+        private TimeSpan _fadeDuration = TimeSpan.FromMilliseconds(120);
 
         public MainWindow()
         {
@@ -27,18 +33,52 @@ namespace DeskOp
         {
             if (sender is Button clickedButton)
             {
+                // Reset old button background
                 if (_selectedButton is not null)
-                    _selectedButton.Background = (Brush)new BrushConverter().ConvertFrom("#292B2F")!;
+                {
+                    _selectedButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#292B2F"));
+                }
 
+                // Animate new selection
                 _selectedButton = clickedButton;
-                _selectedButton.Background = (Brush)new BrushConverter().ConvertFrom("#2ECC71")!;
+                var startColor = ((SolidColorBrush)_selectedButton.Background).Color;
+                var targetColor = (Color)ColorConverter.ConvertFromString("#2ECC71");
+
+                var animatedBrush = new SolidColorBrush(startColor);
+                _selectedButton.Background = animatedBrush;
+
+                var animation = new ColorAnimation
+                {
+                    To = targetColor,
+                    Duration = TimeSpan.FromMilliseconds(200),
+                    EasingFunction = new QuadraticEase()
+                };
+
+                animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
             }
         }
 
-        private void DragArea_MouseDown(object sender, MouseButtonEventArgs e)
+        private void ModeButton_MouseEnter(object sender, MouseEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left)
-                DragMove();
+            if (sender is Button button)
+                AnimateOpacity(button, _hoverDimOpacity);
+        }
+
+        private void ModeButton_MouseLeave(object sender, MouseEventArgs e)
+        {
+            if (sender is Button button)
+                AnimateOpacity(button, _fullOpacity);
+        }
+
+        private void AnimateOpacity(UIElement element, double toOpacity)
+        {
+            var animation = new DoubleAnimation
+            {
+                To = toOpacity,
+                Duration = new Duration(_fadeDuration),
+                EasingFunction = new QuadraticEase()
+            };
+            element.BeginAnimation(UIElement.OpacityProperty, animation);
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
