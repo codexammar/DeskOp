@@ -9,6 +9,7 @@ namespace DeskOp
     public partial class SettingsWindow : Window
     {
         public Action<Brush>? OnBackgroundThemeSelected;
+        public Action<Brush>? OnSelectedColorChanged;
         public Action<Brush>? OnSelectedButtonColorSelected;
         public Action<string>? OnPluginImported;
         public Action<string>? OnThemeModeChanged;
@@ -18,19 +19,13 @@ namespace DeskOp
             InitializeComponent();
         }
 
-        private void SelectColor_Click(object sender, RoutedEventArgs e)
+        private void SelectedColorPicker_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
-            if (sender is Button button && button.Tag is string colorCode)
+            if (e.NewValue.HasValue)
             {
-                try
-                {
-                    var brush = (Brush)new BrushConverter().ConvertFromString(colorCode)!;
-                    OnSelectedButtonColorSelected?.Invoke(brush);
-                }
-                catch
-                {
-                    MessageBox.Show("Invalid color format.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+                var newBrush = new SolidColorBrush(e.NewValue.Value);
+                OnSelectedColorChanged?.Invoke(newBrush);
+                OnSelectedButtonColorSelected?.Invoke(newBrush);
             }
         }
 
@@ -40,7 +35,10 @@ namespace DeskOp
             {
                 OnThemeModeChanged?.Invoke(themeTag);
 
-                var backgroundColor = themeTag == "light" ? Brushes.White : (Brush)new BrushConverter().ConvertFromString("#292B2F")!;
+                var backgroundColor = themeTag == "light" 
+                    ? Brushes.White 
+                    : (Brush)new BrushConverter().ConvertFromString("#292B2F")!;
+
                 OnBackgroundThemeSelected?.Invoke(backgroundColor);
             }
         }
