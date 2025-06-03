@@ -11,9 +11,9 @@ namespace DeskOp
 {
     public partial class MainWindow : Window
     {
-        private Button? _selectedButton;
         private Brush _defaultBrush = (Brush)new BrushConverter().ConvertFrom("#292B2F")!;
         private Brush _selectedBrush = (Brush)new BrushConverter().ConvertFrom("#2ECC71")!;
+        private Button? _selectedButton;
         private double _hoverDimOpacity = 0.7;
         private double _fullOpacity = 1.0;
         private TimeSpan _fadeDuration = TimeSpan.FromMilliseconds(120);
@@ -29,20 +29,58 @@ namespace DeskOp
             SendToBottom();
         }
 
+        private void OpenSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var settingsWindow = new SettingsWindow();
+            settingsWindow.Owner = this;
+            settingsWindow.OnThemeSelected = ApplyTheme;
+            settingsWindow.ShowDialog();
+        }
+
+        public void ApplyTheme(Brush backgroundBrush)
+        {
+            foreach (var child in LogicalTreeHelper.GetChildren(this))
+            {
+                if (child is Border border)
+                {
+                    foreach (var wrap in LogicalTreeHelper.GetChildren(border))
+                    {
+                        if (wrap is WrapPanel panel)
+                        {
+                            foreach (var element in panel.Children)
+                            {
+                                if (element is Button btn)
+                                {
+                                    if (btn != _selectedButton)
+                                    {
+                                        btn.Background = backgroundBrush;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            _defaultBrush = backgroundBrush;
+            if (_selectedButton is not null)
+                _selectedButton.Background = _selectedBrush;
+        }
+
         private void ModeButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button clickedButton)
             {
-                // Reset old button background
+                // Reset previous selection
                 if (_selectedButton is not null)
                 {
-                    _selectedButton.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#292B2F"));
+                    _selectedButton.Background = _defaultBrush;
                 }
 
-                // Animate new selection
+                // Animate to selection color
                 _selectedButton = clickedButton;
                 var startColor = ((SolidColorBrush)_selectedButton.Background).Color;
-                var targetColor = (Color)ColorConverter.ConvertFromString("#2ECC71");
+                var targetColor = ((SolidColorBrush)_selectedBrush).Color;
 
                 var animatedBrush = new SolidColorBrush(startColor);
                 _selectedButton.Background = animatedBrush;

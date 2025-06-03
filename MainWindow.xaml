@@ -11,6 +11,11 @@
         SizeToContent="WidthAndHeight"
         MouseDown="Window_MouseDown"
         Loaded="Window_Loaded">
+        <Window.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Settings" Click="OpenSettings_Click"/>
+            </ContextMenu>
+        </Window.ContextMenu>
 
     <Border Background="#CC1E1E1E"
             Margin="10"
