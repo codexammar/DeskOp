@@ -48,7 +48,20 @@
                     </Setter>
                 </Style>
             </StackPanel.Resources>
-
+            <Border Height="20" MouseDown="DragArea_MouseDown"
+                    HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Margin="0,5" Cursor="SizeAll">
+                <UniformGrid Rows="2" Columns="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                </UniformGrid>
+            </Border>
             <!-- ✅ Mode Button Grid -->
             <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Button x:Name="GamesButton"

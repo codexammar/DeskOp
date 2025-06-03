@@ -14,6 +14,7 @@ namespace DeskOp
         public MainWindow()
         {
             InitializeComponent();
+            this.MouseLeftButtonUp += Window_MouseLeftButtonUp; // 🟢 Listen for drag release
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -36,6 +37,34 @@ namespace DeskOp
                 _selectedButton.Background = (Brush)new BrushConverter().ConvertFrom("#2ECC71"); // Green
 
                 // Future: Load plugin or toggle mode behavior here
+            }
+        }
+
+        private void DragArea_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == System.Windows.Input.MouseButton.Left)
+            {
+                this.DragMove();
+            }
+        }
+
+        private void Window_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            SnapToHorizontalCenterIfClose();
+        }
+
+        private void SnapToHorizontalCenterIfClose()
+        {
+            var screenWidth = SystemParameters.PrimaryScreenWidth;
+            var windowWidth = this.ActualWidth;
+            var currentLeft = this.Left;
+
+            var centerX = (screenWidth - windowWidth) / 2;
+            var snapThreshold = 50; // Snap if within 50px of center
+
+            if (Math.Abs(currentLeft - centerX) <= snapThreshold)
+            {
+                this.Left = centerX;
             }
         }
 
