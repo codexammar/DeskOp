@@ -12,96 +12,120 @@
         Loaded="Window_Loaded">
 
     <Border Background="#CC1E1E1E" Margin="10" CornerRadius="15">
-        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+        <Grid>
+            <!-- ✅ Pill Drag Handle inside border, no layout break -->
+            <Border Width="40"
+                    Height="4"
+                    CornerRadius="2"
+                    Background="#666"
+                    MouseDown="DragArea_MouseDown"
+                    Cursor="Hand"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Margin="0,3"
+                    ToolTip="Drag to move"
+                    Panel.ZIndex="1" />
 
-            <!-- ✅ Reusable Button Style with selection trigger -->
-            <StackPanel.Resources>
-                <Style TargetType="Button" x:Key="ModeButtonStyle">
-                    <Setter Property="Background" Value="#292B2F"/>
-                    <Setter Property="Foreground" Value="White"/>
-                    <Setter Property="FontSize" Value="14"/>
-                    <Setter Property="FontFamily" Value="Segoe UI"/>
-                    <Setter Property="Width" Value="120"/>
-                    <Setter Property="Height" Value="100"/>
-                    <Setter Property="Margin" Value="10"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Cursor" Value="Hand"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="Button">
-                                <Border x:Name="Border"
-                                        Background="{TemplateBinding Background}"
-                                        CornerRadius="10">
-                                    <ContentPresenter HorizontalAlignment="Center"
-                                                      VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Border" Property="Background" Value="#3A3D41"/>
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="Border" Property="Background" Value="#202225"/>
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </StackPanel.Resources>
-            <Border Height="4" MouseDown="DragArea_MouseDown"
-                HorizontalAlignment="Center" VerticalAlignment="Top"
-                Margin="0,2" Cursor="SizeAll">
-                <UniformGrid Rows="2" Columns="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
-                </UniformGrid>
-            </Border>
-            <!-- ✅ Mode Button Grid -->
-            <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <Button x:Name="GamesButton"
-                        Style="{StaticResource ModeButtonStyle}"
-                        Click="ModeButton_Click"
-                        Tag="Games">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Games" FontSize="14"/>
-                    </StackPanel>
-                </Button>
-                <Button x:Name="ProductivityButton"
-                        Style="{StaticResource ModeButtonStyle}"
-                        Click="ModeButton_Click"
-                        Tag="Productivity">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <TextBlock Text="💼" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Productivity" FontSize="14"/>
-                    </StackPanel>
-                </Button>
-                <Button x:Name="NoneButton"
-                        Style="{StaticResource ModeButtonStyle}"
-                        Click="ModeButton_Click"
-                        Tag="None">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <TextBlock Text="🚫" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="None" FontSize="14"/>
-                    </StackPanel>
-                </Button>
-                <Button x:Name="AllButton"
-                        Style="{StaticResource ModeButtonStyle}"
-                        Click="ModeButton_Click"
-                        Tag="All">
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                        <TextBlock Text="🧩" FontSize="20" HorizontalAlignment="Center"/>
-                        <TextBlock Text="All" FontSize="14"/>
-                    </StackPanel>
-                </Button>
-            </WrapPanel>
+            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <!-- ✅ Reusable Styles -->
+                <StackPanel.Resources>
+                    <Style x:Key="GripDotStyle" TargetType="Rectangle">
+                        <Setter Property="Width" Value="3"/>
+                        <Setter Property="Height" Value="3"/>
+                        <Setter Property="Fill" Value="#666"/>
+                        <Setter Property="RadiusX" Value="1.5"/>
+                        <Setter Property="RadiusY" Value="1.5"/>
+                        <Setter Property="RenderTransformOrigin" Value="0.5,0.5"/>
+                        <Setter Property="RenderTransform">
+                            <Setter.Value>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
+                                <Setter Property="Fill" Value="#AAA"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="1.25" ScaleY="1.25"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
 
-        </StackPanel>
+                    <Style TargetType="Button" x:Key="ModeButtonStyle">
+                        <Setter Property="Background" Value="#292B2F"/>
+                        <Setter Property="Foreground" Value="White"/>
+                        <Setter Property="FontSize" Value="14"/>
+                        <Setter Property="FontFamily" Value="Segoe UI"/>
+                        <Setter Property="Width" Value="120"/>
+                        <Setter Property="Height" Value="100"/>
+                        <Setter Property="Margin" Value="10"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Cursor" Value="Hand"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Border"
+                                            Background="{TemplateBinding Background}"
+                                            CornerRadius="10">
+                                        <ContentPresenter HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Border" Property="Background" Value="#3A3D41"/>
+                                        </Trigger>
+                                        <Trigger Property="IsPressed" Value="True">
+                                            <Setter TargetName="Border" Property="Background" Value="#202225"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </StackPanel.Resources>
+
+                <!-- ✅ Mode Buttons -->
+                <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button x:Name="GamesButton"
+                            Style="{StaticResource ModeButtonStyle}"
+                            Click="ModeButton_Click"
+                            Tag="Games">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Games" FontSize="14"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ProductivityButton"
+                            Style="{StaticResource ModeButtonStyle}"
+                            Click="ModeButton_Click"
+                            Tag="Productivity">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <TextBlock Text="💼" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Productivity" FontSize="14"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="NoneButton"
+                            Style="{StaticResource ModeButtonStyle}"
+                            Click="ModeButton_Click"
+                            Tag="None">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <TextBlock Text="🚫" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="None" FontSize="14"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="AllButton"
+                            Style="{StaticResource ModeButtonStyle}"
+                            Click="ModeButton_Click"
+                            Tag="All">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                            <TextBlock Text="🧩" FontSize="20" HorizontalAlignment="Center"/>
+                            <TextBlock Text="All" FontSize="14"/>
+                        </StackPanel>
+                    </Button>
+                </WrapPanel>
+            </StackPanel>
+        </Grid>
     </Border>
 </Window>
