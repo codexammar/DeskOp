@@ -48,18 +48,18 @@
                     </Setter>
                 </Style>
             </StackPanel.Resources>
-            <Border Height="20" MouseDown="DragArea_MouseDown"
-                    HorizontalAlignment="Center" VerticalAlignment="Top"
-                    Margin="0,5" Cursor="SizeAll">
+            <Border Height="4" MouseDown="DragArea_MouseDown"
+                HorizontalAlignment="Center" VerticalAlignment="Top"
+                Margin="0,2" Cursor="SizeAll">
                 <UniformGrid Rows="2" Columns="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
-                    <Rectangle Width="4" Height="4" Fill="#666" RadiusX="2" RadiusY="2"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
+                    <Rectangle Width="3" Height="3" Fill="#666" RadiusX="1.5" RadiusY="1.5"/>
                 </UniformGrid>
             </Border>
             <!-- ✅ Mode Button Grid -->
