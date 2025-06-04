@@ -29,6 +29,7 @@ namespace DeskOp
         private System.Windows.Point _dragOffset;
         private System.Windows.Media.Brush _defaultBrush = new SolidColorBrush(Color.FromRgb(41, 43, 47));
         private System.Windows.Media.Brush _highlightBrush = new SolidColorBrush(Color.FromRgb(46, 204, 113));
+        private SnapZone _currentSnapZone = SnapZone.CenterBottom; // or any default
 
         public BottomWindow()
         {
@@ -43,15 +44,18 @@ namespace DeskOp
             this.Topmost = true;
             this.SizeToContent = SizeToContent.Manual;
 
-            Rect initial = GetSnapRect(SnapZone.CenterBottom);
+            _overlay = new SnapHintOverlay();
+            _overlay.Owner = null;
+            _overlay.Show();
+
+            bool hasIcons = LoadIcons("None");
+            int iconCount = IconPanel.Children.Count;
+
+            Rect initial = GetDynamicSnapRect(SnapZone.CenterBottom, iconCount);
             this.Left = initial.Left;
             this.Top = initial.Top;
             this.Width = initial.Width;
             this.Height = initial.Height;
-
-            _overlay = new SnapHintOverlay();
-            _overlay.Owner = null;
-            _overlay.Show();
 
             LoadIcons("None");
 
@@ -150,6 +154,10 @@ namespace DeskOp
 
         public bool LoadIcons(string category)
         {
+            IconPanel.Orientation = (_currentSnapZone == SnapZone.Left || _currentSnapZone == SnapZone.Right)
+            ? Orientation.Vertical
+            : Orientation.Horizontal;
+
             _currentCategory = category;
             IconPanel.Children.Clear();
 
@@ -241,6 +249,12 @@ namespace DeskOp
                 ResizeToFit();
                 return true;
             }
+
+            // 🧱 Constrain vertical size to prevent scrolling and force wrap
+            double screenHeight = SystemParameters.PrimaryScreenHeight;
+            double maxHeight = screenHeight * 0.8;
+
+            IconPanel.MaxHeight = maxHeight;
 
             return added > 0;
         }
@@ -375,17 +389,39 @@ namespace DeskOp
         private void ShowSnapHintForCurrentPosition()
         {
             SnapZone zone = DetermineBestSnapZone();
-            Rect previewRect = GetSnapRect(zone);
+            int iconCount = IconPanel.Children.Count;
+
+            Rect previewRect = GetDynamicSnapRect(zone, iconCount);
             _overlay?.ShowHint(previewRect);
         }
 
         private void SnapToNearestZone()
         {
-            SnapZone zone = DetermineBestSnapZone();
-            Rect rect = GetSnapRect(zone);
+            _currentSnapZone = DetermineBestSnapZone();
+            int iconCount = IconPanel.Children.Count;
+            Rect rect = GetDynamicSnapRect(_currentSnapZone, iconCount);
             _lastSnapRect = rect;
             _wasSnapped = true;
             AnimateTo(rect);
+
+            ApplyOrientationForSnapZone(); // 💡 New helper
+        }
+
+        private void ApplyOrientationForSnapZone()
+        {
+            IconPanel.Orientation = (_currentSnapZone == SnapZone.Left || _currentSnapZone == SnapZone.Right)
+                ? Orientation.Vertical
+                : Orientation.Horizontal;
+
+            // Optional: center-align in horizontal mode
+            if (_currentSnapZone == SnapZone.CenterBottom || _currentSnapZone == SnapZone.HorizontalStrip)
+            {
+                IconPanel.HorizontalAlignment = HorizontalAlignment.Center;
+            }
+            else
+            {
+                IconPanel.HorizontalAlignment = HorizontalAlignment.Left;
+            }
         }
 
         private SnapZone DetermineBestSnapZone()
@@ -414,19 +450,35 @@ namespace DeskOp
             return distances[0].Item1;
         }
 
-        private Rect GetSnapRect(SnapZone zone)
+        private Rect GetDynamicSnapRect(SnapZone zone, int iconCount)
         {
             double screenWidth = SystemParameters.PrimaryScreenWidth;
             double screenHeight = SystemParameters.PrimaryScreenHeight;
             double padding = 40;
 
+            // Tile layout assumptions
+            double tileSize = 100;
+            double tileSpacing = 12;
+            double tileFullHeight = tileSize + tileSpacing;
+            double tileFullWidth = tileSize + tileSpacing;
+
+            double maxHeight = screenHeight * 0.8;
+            int maxRows = (int)Math.Floor(maxHeight / tileFullHeight);
+            maxRows = Math.Max(1, maxRows); // Always at least 1 row
+
+            int requiredColumns = (int)Math.Ceiling((double)iconCount / maxRows);
+            int actualRows = Math.Min(iconCount, maxRows);
+
+            double finalWidth = requiredColumns * tileFullWidth + padding;
+            double finalHeight = actualRows * tileFullHeight + padding;
+
             return zone switch
             {
-                SnapZone.Left => new Rect(padding, screenHeight * 0.25, 300, 400),
-                SnapZone.Right => new Rect(screenWidth - 300 - padding, screenHeight * 0.25, 300, 400),
-                SnapZone.HorizontalStrip => new Rect((screenWidth - 600) / 2, screenHeight - 200 - padding, 600, 200),
-                SnapZone.Square => new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400),
-                SnapZone.CenterBottom => new Rect((screenWidth - 600) / 2, screenHeight - 180 - padding, 600, 180),
+                SnapZone.Left => new Rect(padding, screenHeight * 0.1, finalWidth, finalHeight),
+                SnapZone.Right => new Rect(screenWidth - finalWidth - padding, screenHeight * 0.1, finalWidth, finalHeight),
+                SnapZone.HorizontalStrip => new Rect((screenWidth - 600) / 2, screenHeight - 200 - padding, 600, 200), // unchanged
+                SnapZone.Square => new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400), // unchanged
+                SnapZone.CenterBottom => new Rect((screenWidth - finalWidth) / 2, screenHeight - finalHeight - padding, finalWidth, finalHeight),
                 _ => Rect.Empty
             };
         }
@@ -460,45 +512,21 @@ namespace DeskOp
 
         private void AnimateTo(Rect target)
         {
-            double startLeft = this.Left;
-            double startTop = this.Top;
-            double startWidth = this.Width;
-            double startHeight = this.Height;
-
-            double dLeft = target.Left - startLeft;
-            double dTop = target.Top - startTop;
-            double dWidth = target.Width - startWidth;
-            double dHeight = target.Height - startHeight;
-
-            int durationMs = 150;
-            int frames = 20;
-            int interval = durationMs / frames;
-            int currentFrame = 0;
-
-            DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(interval) };
-
-            timer.Tick += (s, e) =>
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120));
+            fadeOut.Completed += (s, e) =>
             {
-                currentFrame++;
-                double progress = (double)currentFrame / frames;
-                double eased = EaseOutQuad(progress);
+                // Snap instantly after fade out
+                this.Left = target.Left;
+                this.Top = target.Top;
+                this.Width = target.Width;
+                this.Height = target.Height;
 
-                this.Left = startLeft + dLeft * eased;
-                this.Top = startTop + dTop * eased;
-                this.Width = startWidth + dWidth * eased;
-                this.Height = startHeight + dHeight * eased;
-
-                if (currentFrame >= frames)
-                {
-                    timer.Stop();
-                    this.Left = target.Left;
-                    this.Top = target.Top;
-                    this.Width = target.Width;
-                    this.Height = target.Height;
-                }
+                // Fade back in
+                var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180));
+                this.BeginAnimation(Window.OpacityProperty, fadeIn);
             };
 
-            timer.Start();
+            this.BeginAnimation(Window.OpacityProperty, fadeOut);
         }
 
         private double EaseOutQuad(double t) => t * (2 - t);
