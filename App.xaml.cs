@@ -19,6 +19,9 @@ namespace DeskOp
             };
 
             SetupTrayIcon();
+
+            var bottomWindow = new BottomWindow();
+            bottomWindow.Show();
         }
 
         private void SetupTrayIcon()
