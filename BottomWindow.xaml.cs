@@ -12,6 +12,9 @@ using System.Windows.Threading;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using System.Linq;
+using DrawingIcon = System.Drawing.Icon;
+using System.Globalization;
+using System.Windows.Media.Imaging;
 
 namespace DeskOp
 {
@@ -19,13 +22,13 @@ namespace DeskOp
     {
         private Rect? _lastSnapRect = null;
         private bool _wasSnapped = false;
-        private Point _dragOffset;
         private bool _isDragging = false;
         private SnapHintOverlay? _overlay;
         private Dictionary<string, List<string>> _filters = new();
         private string _currentCategory = "None";
-        private Brush _defaultBrush = new SolidColorBrush(Color.FromRgb(41, 43, 47));
-        private Brush _highlightBrush = new SolidColorBrush(Color.FromRgb(46, 204, 113));
+        private System.Windows.Point _dragOffset;
+        private System.Windows.Media.Brush _defaultBrush = new SolidColorBrush(Color.FromRgb(41, 43, 47));
+        private System.Windows.Media.Brush _highlightBrush = new SolidColorBrush(Color.FromRgb(46, 204, 113));
 
         public BottomWindow()
         {
@@ -61,7 +64,7 @@ namespace DeskOp
             SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         }
 
-        public void SetTheme(Brush defaultBg, Brush highlightBg)
+        public void SetTheme(System.Windows.Media.Brush defaultBg, System.Windows.Media.Brush highlightBg)
         {
             _defaultBrush = defaultBg;
             _highlightBrush = highlightBg;
@@ -153,15 +156,10 @@ namespace DeskOp
             string userDesktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string publicDesktop = Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory);
 
-            var files = new List<string>();
-            files.AddRange(Directory.GetFiles(userDesktop));
-            files.AddRange(Directory.GetFiles(publicDesktop));
-
-            files = files.FindAll(f =>
-            {
-                var attr = File.GetAttributes(f);
-                return !attr.HasFlag(FileAttributes.Hidden) && !attr.HasFlag(FileAttributes.System);
-            });
+            var files = Directory.GetFiles(userDesktop)
+                .Concat(Directory.GetFiles(publicDesktop))
+                .Where(f => !File.GetAttributes(f).HasFlag(FileAttributes.Hidden | FileAttributes.System))
+                .ToList();
 
             int added = 0;
             foreach (var path in files)
@@ -170,10 +168,16 @@ namespace DeskOp
                 string ext = Path.GetExtension(path).TrimStart('.').ToLower();
                 List<string> searchTerms = new() { name, ext };
 
+                string? iconPath = path;
+
                 if (path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
                 {
                     var (target, args, startIn, comment) = GetShortcutDetails(path);
-                    if (!string.IsNullOrWhiteSpace(target)) searchTerms.Add(target.ToLower());
+                    if (!string.IsNullOrWhiteSpace(target))
+                    {
+                        searchTerms.Add(target.ToLower());
+                        iconPath = target;
+                    }
                     if (!string.IsNullOrWhiteSpace(args)) searchTerms.Add(args.ToLower());
                     if (!string.IsNullOrWhiteSpace(startIn)) searchTerms.Add(startIn.ToLower());
                     if (!string.IsNullOrWhiteSpace(comment)) searchTerms.Add(comment.ToLower());
@@ -186,20 +190,48 @@ namespace DeskOp
 
                 if (ShouldIncludeAny(searchTerms, category))
                 {
-                    var icon = new Button
+                    var tile = new Button
                     {
-                        Content = name,
+                        Width = 100,
+                        Height = 100,
+                        Margin = new Thickness(6),
+                        Padding = new Thickness(4),
                         Background = _defaultBrush,
                         Foreground = Brushes.White,
-                        Margin = new Thickness(6),
-                        Padding = new Thickness(12, 6, 12, 6),
                         Cursor = Cursors.Hand,
                         BorderThickness = new Thickness(0),
-                        FontSize = 14
                     };
 
-                    icon.Click += (s, e) => Process.Start("explorer.exe", path);
-                    IconPanel.Children.Add(icon);
+                    var stack = new StackPanel
+                    {
+                        Orientation = Orientation.Vertical,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+
+                    var iconImage = new Image
+                    {
+                        Width = 48,
+                        Height = 48,
+                        Source = GetIconImage(iconPath),
+                        Margin = new Thickness(0, 0, 0, 4)
+                    };
+
+                    var label = new TextBlock
+                    {
+                        Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name),
+                        TextAlignment = TextAlignment.Center,
+                        TextWrapping = TextWrapping.Wrap,
+                        FontSize = 11,
+                        MaxWidth = 90
+                    };
+
+                    stack.Children.Add(iconImage);
+                    stack.Children.Add(label);
+                    tile.Content = stack;
+
+                    tile.Click += (s, e) => Process.Start("explorer.exe", path);
+                    IconPanel.Children.Add(tile);
                     added++;
                 }
             }
@@ -211,6 +243,27 @@ namespace DeskOp
             }
 
             return added > 0;
+        }
+
+        private BitmapSource? GetIconImage(string? filePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+                    return null;
+
+                var icon = DrawingIcon.ExtractAssociatedIcon(filePath);
+                if (icon == null) return null;
+
+                return Imaging.CreateBitmapSourceFromHIcon(
+                    icon.Handle,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromWidthAndHeight(64, 64));
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private bool ShouldInclude(string name, string category)
@@ -383,7 +436,7 @@ namespace DeskOp
             LoadIcons(category);
         }
 
-        public void ApplyTheme(Brush defaultBg, Brush highlightBg, string mode)
+        public void ApplyTheme(System.Windows.Media.Brush defaultBg, System.Windows.Media.Brush highlightBg, string mode)
         {
             _defaultBrush = defaultBg;
             _highlightBrush = highlightBg;
