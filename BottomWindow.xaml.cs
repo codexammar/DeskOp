@@ -9,8 +9,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using System.Runtime.InteropServices;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 
 namespace DeskOp
 {
@@ -28,6 +28,8 @@ namespace DeskOp
         {
             InitializeComponent();
             LoadFilters();
+            this.Opacity = 0;
+            this.Visibility = Visibility.Collapsed;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -35,7 +37,6 @@ namespace DeskOp
             this.Topmost = true;
             this.SizeToContent = SizeToContent.Manual;
 
-            // Snap to initial position
             Rect initial = GetSnapRect(SnapZone.CenterBottom);
             this.Left = initial.Left;
             this.Top = initial.Top;
@@ -54,7 +55,6 @@ namespace DeskOp
             exStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
             SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
 
-            // Send to bottom layer (desktop-level, non-focusable)
             SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         }
 
@@ -64,7 +64,7 @@ namespace DeskOp
             _highlightBrush = highlightBg;
         }
 
-        public void LoadIcons(string category)
+        public bool LoadIcons(string category)
         {
             _currentCategory = category;
             IconPanel.Children.Clear();
@@ -72,6 +72,7 @@ namespace DeskOp
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             var files = Directory.GetFiles(desktopPath, "*.url");
 
+            int added = 0;
             foreach (var path in files)
             {
                 string name = Path.GetFileNameWithoutExtension(path).ToLower();
@@ -91,10 +92,12 @@ namespace DeskOp
 
                     icon.Click += (s, e) => Process.Start("explorer.exe", path);
                     IconPanel.Children.Add(icon);
+                    added++;
                 }
             }
 
             ResizeToFit();
+            return added > 0;
         }
 
         private bool ShouldInclude(string name, string category)
@@ -141,7 +144,22 @@ namespace DeskOp
             }, DispatcherPriority.Loaded);
         }
 
-        // 🧲 Snap logic (same as before)
+        // New Fade Helpers
+        public void ShowWithFade()
+        {
+            this.Visibility = Visibility.Visible;
+            var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+            this.BeginAnimation(Window.OpacityProperty, fade);
+        }
+
+        public void HideWithFade()
+        {
+            var fade = new DoubleAnimation(this.Opacity, 0, TimeSpan.FromMilliseconds(200));
+            fade.Completed += (s, e) => this.Visibility = Visibility.Collapsed;
+            this.BeginAnimation(Window.OpacityProperty, fade);
+        }
+
+        // 🧲 Snap logic
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
@@ -174,7 +192,6 @@ namespace DeskOp
             }
         }
 
-        // 🧭 Snap zone logic (unchanged)
         private enum SnapZone { Left, Right, HorizontalStrip, Square, CenterBottom }
 
         private void ShowSnapHintForCurrentPosition()
@@ -246,10 +263,9 @@ namespace DeskOp
 
             bool isLight = mode == "light";
             var fg = isLight ? Brushes.Black : Brushes.White;
-            var bg = isLight ? Brushes.White : new SolidColorBrush(Color.FromArgb(200, 30, 30, 30)); // match mainwindow
+            var bg = isLight ? Brushes.White : new SolidColorBrush(Color.FromArgb(200, 30, 30, 30));
 
             this.Background = Brushes.Transparent;
-
             RootBorder.Background = bg;
 
             foreach (var child in IconPanel.Children)

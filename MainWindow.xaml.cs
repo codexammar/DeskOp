@@ -158,6 +158,7 @@ namespace DeskOp
         {
             if (sender is Button clickedButton)
             {
+                // Reset previous selected button
                 if (_selectedButton is not null)
                     _selectedButton.Background = _defaultBrush;
 
@@ -174,31 +175,34 @@ namespace DeskOp
                     Duration = TimeSpan.FromMilliseconds(200),
                     EasingFunction = new QuadraticEase()
                 };
-
                 animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
 
                 _currentFilter = clickedButton.Tag?.ToString() ?? "None";
 
                 if (_currentFilter == "None")
                 {
-                    _bottomWindow?.Hide(); // 🫥 Hide if None selected
+                    _bottomWindow?.HideWithFade();
                 }
                 else
                 {
+                    // Create BottomWindow if needed
                     if (_bottomWindow is null)
                     {
                         _bottomWindow = new BottomWindow();
                         _bottomWindow.SetTheme(_defaultBrush, _selectedBrush);
-                        _bottomWindow.LoadIcons(_currentFilter);
                         _bottomWindow.ApplyTheme(_defaultBrush, _selectedBrush, _currentThemeMode);
-                        _bottomWindow.Show();
+                    }
+
+                    bool hasIcons = _bottomWindow.LoadIcons(_currentFilter);
+                    SyncThemeToBottomWindow();
+
+                    if (hasIcons)
+                    {
+                        _bottomWindow.ShowWithFade();
                     }
                     else
                     {
-                        _bottomWindow.ApplyFilter(_currentFilter);
-                        SyncThemeToBottomWindow();
-                        if (!_bottomWindow.IsVisible)
-                            _bottomWindow.Show(); // 📣 Redisplay if it was hidden
+                        _bottomWindow.HideWithFade();
                     }
                 }
             }
