@@ -71,8 +71,19 @@ namespace DeskOp
             _currentCategory = category;
             IconPanel.Children.Clear();
 
-            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-            var files = Directory.GetFiles(desktopPath, "*.url");
+            string userDesktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string publicDesktop = Environment.GetFolderPath(Environment.SpecialFolder.CommonDesktopDirectory);
+
+            var files = new List<string>();
+            files.AddRange(Directory.GetFiles(userDesktop));
+            files.AddRange(Directory.GetFiles(publicDesktop));
+
+            files = files.FindAll(f =>
+            {
+                var attr = File.GetAttributes(f);
+                return !attr.HasFlag(FileAttributes.Hidden) &&
+                    !attr.HasFlag(FileAttributes.System);
+            });
 
             int added = 0;
             foreach (var path in files)
@@ -98,7 +109,6 @@ namespace DeskOp
                 }
             }
 
-            // ✅ Only auto-resize if not restoring a snap
             if (added > 0 && !_wasSnapped)
             {
                 ResizeToFit();
