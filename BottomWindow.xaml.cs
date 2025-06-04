@@ -16,6 +16,8 @@ namespace DeskOp
 {
     public partial class BottomWindow : Window
     {
+        private Rect? _lastSnapRect = null;
+        private bool _wasSnapped = false;
         private Point _dragOffset;
         private bool _isDragging = false;
         private SnapHintOverlay? _overlay;
@@ -96,13 +98,14 @@ namespace DeskOp
                 }
             }
 
-            if (added > 0)
+            // ✅ Only auto-resize if not restoring a snap
+            if (added > 0 && !_wasSnapped)
             {
-                ResizeToFit();  // ✅ Only resize if there's something to show
+                ResizeToFit();
                 return true;
             }
 
-            return false;
+            return added > 0;
         }
 
         private bool ShouldInclude(string name, string category)
@@ -152,13 +155,25 @@ namespace DeskOp
         // New Fade Helpers
         public void ShowWithFade()
         {
+            if (_lastSnapRect.HasValue)
+            {
+                this.Left = _lastSnapRect.Value.Left;
+                this.Top = _lastSnapRect.Value.Top;
+                this.Width = _lastSnapRect.Value.Width;
+                this.Height = _lastSnapRect.Value.Height;
+            }
+
             this.Visibility = Visibility.Visible;
+
             var fade = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
             this.BeginAnimation(Window.OpacityProperty, fade);
         }
 
         public void HideWithFade()
         {
+            if (_wasSnapped)
+                _lastSnapRect = new Rect(this.Left, this.Top, this.Width, this.Height);
+
             var fade = new DoubleAnimation(this.Opacity, 0, TimeSpan.FromMilliseconds(200));
             fade.Completed += (s, e) => this.Visibility = Visibility.Collapsed;
             this.BeginAnimation(Window.OpacityProperty, fade);
@@ -210,6 +225,8 @@ namespace DeskOp
         {
             SnapZone zone = DetermineBestSnapZone();
             Rect rect = GetSnapRect(zone);
+            _lastSnapRect = rect;
+            _wasSnapped = true;
             AnimateTo(rect);
         }
 
