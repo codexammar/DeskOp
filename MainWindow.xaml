@@ -96,7 +96,7 @@
                     MouseLeave="ModeButton_MouseLeave">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                     <TextBlock Text="🧩" FontSize="20" HorizontalAlignment="Center"/>
-                    <TextBlock Text="All" FontSize="12"/>
+                    <TextBlock Text="All" FontSize="12" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Button>
         </WrapPanel>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -17,7 +18,7 @@ namespace DeskOp
         private double _hoverDimOpacity = 0.7;
         private double _fullOpacity = 1.0;
         private TimeSpan _fadeDuration = TimeSpan.FromMilliseconds(120);
-        private string _currentThemeMode = "dark"; // or "light"
+        private string _currentThemeMode = "dark";
 
         public MainWindow()
         {
@@ -27,18 +28,49 @@ namespace DeskOp
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            SendToBottom();
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+
+            // Set tool window and prevent activation
+            int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            exStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
+            SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+
+            // Detect Wallpaper Engine
+            bool wallpaperEngineRunning = IsWallpaperEngineRunning();
+
+            if (!wallpaperEngineRunning)
+            {
+                // Set parent to Progman to dock below icons
+                IntPtr progman = FindWindow("Progman", null);
+                if (progman != IntPtr.Zero)
+                {
+                    SetParent(hwnd, progman);
+                }
+            }
+
+            // Push to bottom
+            SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        }
+
+        private bool IsWallpaperEngineRunning()
+        {
+            foreach (var p in Process.GetProcesses())
+            {
+                string name = p.ProcessName.ToLower();
+                if (name.Contains("wallpaper32") || name.Contains("wallpaper64"))
+                    return true;
+            }
+            return false;
         }
 
         private void OpenSettings_Click(object sender, RoutedEventArgs e)
         {
             var settingsWindow = new SettingsWindow();
             settingsWindow.Owner = this;
-
             settingsWindow.OnBackgroundThemeSelected = ApplyButtonBackground;
             settingsWindow.OnSelectedButtonColorSelected = ApplySelectedHighlight;
             settingsWindow.OnThemeModeChanged = ApplyThemeMode;
-
             settingsWindow.ShowDialog();
         }
 
@@ -107,7 +139,6 @@ namespace DeskOp
                         if (child is Button btn)
                         {
                             btn.Foreground = fg;
-
                             if (btn != _selectedButton)
                                 btn.Background = _defaultBrush;
                         }
@@ -186,20 +217,30 @@ namespace DeskOp
                 Left = centerX;
         }
 
-        private void SendToBottom()
-        {
-            var hwnd = new WindowInteropHelper(this).Handle;
-            SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        }
-
+        // Win32 API Interop
         private const int SWP_NOMOVE = 0x0002;
         private const int SWP_NOSIZE = 0x0001;
         private const int SWP_NOACTIVATE = 0x0010;
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
+
         private static readonly IntPtr HWND_BOTTOM = new(1);
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter,
             int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
     }
 }
