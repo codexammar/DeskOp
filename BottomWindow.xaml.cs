@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
+using System.Linq;
 
 namespace DeskOp
 {
@@ -66,6 +67,60 @@ namespace DeskOp
             _highlightBrush = highlightBg;
         }
 
+        private string? GetUrlFromInternetShortcut(string path)
+        {
+            try
+            {
+                var lines = File.ReadAllLines(path);
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("URL=", StringComparison.OrdinalIgnoreCase))
+                        return line.Substring(4).Trim();
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        private (string? TargetPath, string? Arguments, string? WorkingDir, string? Description) GetShortcutDetails(string shortcutPath)
+        {
+            try
+            {
+                dynamic shell = Activator.CreateInstance(Type.GetTypeFromProgID("WScript.Shell")!);
+                dynamic shortcut = shell.CreateShortcut(shortcutPath);
+
+                return (
+                    shortcut.TargetPath as string,
+                    shortcut.Arguments as string,
+                    shortcut.WorkingDirectory as string,
+                    shortcut.Description as string
+                );
+            }
+            catch
+            {
+                return (null, null, null, null);
+            }
+        }
+
+        private bool ShouldIncludeAny(List<string> candidates, string category)
+        {
+            if (category == "All") return true;
+            if (category == "None") return false;
+
+            if (_filters.TryGetValue(category, out var keywords))
+            {
+                foreach (var keyword in keywords)
+                {
+                    string kw = keyword.ToLower();
+                    if (candidates.Any(text => text.Contains(kw)))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         public bool LoadIcons(string category)
         {
             _currentCategory = category;
@@ -81,15 +136,31 @@ namespace DeskOp
             files = files.FindAll(f =>
             {
                 var attr = File.GetAttributes(f);
-                return !attr.HasFlag(FileAttributes.Hidden) &&
-                    !attr.HasFlag(FileAttributes.System);
+                return !attr.HasFlag(FileAttributes.Hidden) && !attr.HasFlag(FileAttributes.System);
             });
 
             int added = 0;
             foreach (var path in files)
             {
                 string name = Path.GetFileNameWithoutExtension(path).ToLower();
-                if (ShouldInclude(name, category))
+                string ext = Path.GetExtension(path).TrimStart('.').ToLower();
+                List<string> searchTerms = new() { name, ext };
+
+                if (path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+                {
+                    var (target, args, startIn, comment) = GetShortcutDetails(path);
+                    if (!string.IsNullOrWhiteSpace(target)) searchTerms.Add(target.ToLower());
+                    if (!string.IsNullOrWhiteSpace(args)) searchTerms.Add(args.ToLower());
+                    if (!string.IsNullOrWhiteSpace(startIn)) searchTerms.Add(startIn.ToLower());
+                    if (!string.IsNullOrWhiteSpace(comment)) searchTerms.Add(comment.ToLower());
+                }
+                else if (path.EndsWith(".url", StringComparison.OrdinalIgnoreCase))
+                {
+                    var url = GetUrlFromInternetShortcut(path);
+                    if (!string.IsNullOrWhiteSpace(url)) searchTerms.Add(url.ToLower());
+                }
+
+                if (ShouldIncludeAny(searchTerms, category))
                 {
                     var icon = new Button
                     {
