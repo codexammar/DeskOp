@@ -96,8 +96,13 @@ namespace DeskOp
                 }
             }
 
-            ResizeToFit();
-            return added > 0;
+            if (added > 0)
+            {
+                ResizeToFit();  // ✅ Only resize if there's something to show
+                return true;
+            }
+
+            return false;
         }
 
         private bool ShouldInclude(string name, string category)
