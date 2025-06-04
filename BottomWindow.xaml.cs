@@ -108,6 +108,7 @@ namespace DeskOp
             if (category == "All") return true;
             if (category == "None") return false;
 
+            // Explicit match for requested category
             if (_filters.TryGetValue(category, out var keywords))
             {
                 foreach (var keyword in keywords)
@@ -118,6 +119,29 @@ namespace DeskOp
                 }
             }
 
+            // Special fallback: Productivity = NOT Docs and NOT Games
+            if (category == "Productivity")
+            {
+                bool isInDocs = MatchesCategory(candidates, "Docs");
+                bool isInGames = MatchesCategory(candidates, "Games");
+
+                return !isInDocs && !isInGames;
+            }
+
+            return false;
+        }
+
+        private bool MatchesCategory(List<string> candidates, string category)
+        {
+            if (_filters.TryGetValue(category, out var keywords))
+            {
+                foreach (var keyword in keywords)
+                {
+                    string kw = keyword.ToLower();
+                    if (candidates.Any(text => text.Contains(kw)))
+                        return true;
+                }
+            }
             return false;
         }
 
