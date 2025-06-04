@@ -7,34 +7,22 @@
         Background="Transparent"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
-        SizeToContent="WidthAndHeight"
+        Topmost="True"
+        Loaded="Window_Loaded"
         MouseDown="Window_MouseDown"
-        MouseLeftButtonUp="Window_MouseLeftButtonUp"
         MouseMove="Window_MouseMove"
-        Loaded="Window_Loaded">
-
+        MouseLeftButtonUp="Window_MouseLeftButtonUp">
     <Border x:Name="RootBorder"
             Background="#CC1E1E1E"
-            CornerRadius="20"
+            CornerRadius="12"
             Padding="12"
-            Margin="10">
-        <Border.Effect>
-            <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
-        </Border.Effect>
-
-        <StackPanel>
-            <TextBlock Text="📦 Plugin Area"
-                       Foreground="White"
-                       FontSize="16"
-                       FontWeight="Bold"
-                       HorizontalAlignment="Center"
-                       Margin="0,0,0,6"/>
-
-            <WrapPanel HorizontalAlignment="Center">
-                <Button Content="Demo 1" Margin="6" Padding="12,6"/>
-                <Button Content="Demo 2" Margin="6" Padding="12,6"/>
-                <Button Content="Demo 3" Margin="6" Padding="12,6"/>
-            </WrapPanel>
-        </StackPanel>
+            Margin="10"
+            SnapsToDevicePixels="True">
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <WrapPanel x:Name="IconPanel"
+                       Margin="6"
+                       Orientation="Horizontal" />
+        </ScrollViewer>
     </Border>
 </Window>

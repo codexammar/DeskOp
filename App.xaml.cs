@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Windows;
-using Application = System.Windows.Application;
+using System.Windows.Media;
 
 namespace DeskOp
 {
     public partial class App : Application
     {
         private System.Windows.Forms.NotifyIcon? _trayIcon;
+
+        private Brush _defaultBrush = (Brush)new BrushConverter().ConvertFrom("#292B2F")!;
+        private Brush _selectedBrush = (Brush)new BrushConverter().ConvertFrom("#2ECC71")!;
+        private string _category = "None";
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -19,9 +23,6 @@ namespace DeskOp
             };
 
             SetupTrayIcon();
-
-            var bottomWindow = new BottomWindow();
-            bottomWindow.Show();
         }
 
         private void SetupTrayIcon()

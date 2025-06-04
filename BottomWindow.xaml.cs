@@ -1,8 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 
 namespace DeskOp
 {
@@ -11,10 +19,15 @@ namespace DeskOp
         private Point _dragOffset;
         private bool _isDragging = false;
         private SnapHintOverlay? _overlay;
+        private Dictionary<string, List<string>> _filters = new();
+        private string _currentCategory = "None";
+        private Brush _defaultBrush = new SolidColorBrush(Color.FromRgb(41, 43, 47));
+        private Brush _highlightBrush = new SolidColorBrush(Color.FromRgb(46, 204, 113));
 
         public BottomWindow()
         {
             InitializeComponent();
+            LoadFilters();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -22,19 +35,113 @@ namespace DeskOp
             this.Topmost = true;
             this.SizeToContent = SizeToContent.Manual;
 
-            // Set to initial snap location
+            // Snap to initial position
             Rect initial = GetSnapRect(SnapZone.CenterBottom);
             this.Left = initial.Left;
             this.Top = initial.Top;
             this.Width = initial.Width;
             this.Height = initial.Height;
 
-            // Launch snap overlay
             _overlay = new SnapHintOverlay();
             _overlay.Owner = null;
             _overlay.Show();
+
+            LoadIcons("None");
+
+            var hwnd = new WindowInteropHelper(this).Handle;
+
+            int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            exStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
+            SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+
+            // Send to bottom layer (desktop-level, non-focusable)
+            SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         }
 
+        public void SetTheme(Brush defaultBg, Brush highlightBg)
+        {
+            _defaultBrush = defaultBg;
+            _highlightBrush = highlightBg;
+        }
+
+        public void LoadIcons(string category)
+        {
+            _currentCategory = category;
+            IconPanel.Children.Clear();
+
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            var files = Directory.GetFiles(desktopPath, "*.url");
+
+            foreach (var path in files)
+            {
+                string name = Path.GetFileNameWithoutExtension(path).ToLower();
+                if (ShouldInclude(name, category))
+                {
+                    var icon = new Button
+                    {
+                        Content = name,
+                        Background = _defaultBrush,
+                        Foreground = Brushes.White,
+                        Margin = new Thickness(6),
+                        Padding = new Thickness(12, 6, 12, 6),
+                        Cursor = Cursors.Hand,
+                        BorderThickness = new Thickness(0),
+                        FontSize = 14
+                    };
+
+                    icon.Click += (s, e) => Process.Start("explorer.exe", path);
+                    IconPanel.Children.Add(icon);
+                }
+            }
+
+            ResizeToFit();
+        }
+
+        private bool ShouldInclude(string name, string category)
+        {
+            if (category == "All") return true;
+            if (category == "None") return false;
+
+            if (_filters.TryGetValue(category, out var keywords))
+            {
+                foreach (var word in keywords)
+                    if (name.Contains(word.ToLower()))
+                        return true;
+            }
+            return false;
+        }
+
+        private void LoadFilters()
+        {
+            try
+            {
+                string path = "filters.json";
+                string json = File.ReadAllText(path);
+                _filters = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json)!;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load filters.json\n\n{ex.Message}", "DeskOp Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                _filters = new();
+            }
+        }
+
+        private void ResizeToFit()
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                IconPanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                Size desired = IconPanel.DesiredSize;
+
+                double padding = 40;
+                double width = Math.Min(desired.Width + padding, SystemParameters.PrimaryScreenWidth - 100);
+                double height = Math.Min(desired.Height + padding, SystemParameters.PrimaryScreenHeight - 100);
+
+                AnimateTo(new Rect(this.Left, this.Top, width, height));
+            }, DispatcherPriority.Loaded);
+        }
+
+        // 🧲 Snap logic (same as before)
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
@@ -52,7 +159,6 @@ namespace DeskOp
                 var screenPos = PointToScreen(e.GetPosition(this));
                 this.Left = screenPos.X - _dragOffset.X;
                 this.Top = screenPos.Y - _dragOffset.Y;
-
                 ShowSnapHintForCurrentPosition();
             }
         }
@@ -63,16 +169,13 @@ namespace DeskOp
             {
                 _isDragging = false;
                 this.ReleaseMouseCapture();
-
                 _overlay?.HideHint();
                 SnapToNearestZone();
             }
         }
 
-        private enum SnapZone
-        {
-            Left, Right, HorizontalStrip, Square, CenterBottom
-        }
+        // 🧭 Snap zone logic (unchanged)
+        private enum SnapZone { Left, Right, HorizontalStrip, Square, CenterBottom }
 
         private void ShowSnapHintForCurrentPosition()
         {
@@ -120,19 +223,42 @@ namespace DeskOp
             double screenHeight = SystemParameters.PrimaryScreenHeight;
             double padding = 40;
 
-            switch (zone)
+            return zone switch
             {
-                case SnapZone.Left:
-                    return new Rect(padding, screenHeight * 0.25, 300, 400);
-                case SnapZone.Right:
-                    return new Rect(screenWidth - 300 - padding, screenHeight * 0.25, 300, 400);
-                case SnapZone.HorizontalStrip:
-                    return new Rect((screenWidth - 600) / 2, screenHeight - 200 - padding, 600, 200);
-                case SnapZone.Square:
-                    return new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400);
-                case SnapZone.CenterBottom:
-                default:
-                    return new Rect((screenWidth - 600) / 2, screenHeight - 180 - padding, 600, 180);
+                SnapZone.Left => new Rect(padding, screenHeight * 0.25, 300, 400),
+                SnapZone.Right => new Rect(screenWidth - 300 - padding, screenHeight * 0.25, 300, 400),
+                SnapZone.HorizontalStrip => new Rect((screenWidth - 600) / 2, screenHeight - 200 - padding, 600, 200),
+                SnapZone.Square => new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400),
+                SnapZone.CenterBottom => new Rect((screenWidth - 600) / 2, screenHeight - 180 - padding, 600, 180),
+                _ => Rect.Empty
+            };
+        }
+
+        public void ApplyFilter(string category)
+        {
+            LoadIcons(category);
+        }
+
+        public void ApplyTheme(Brush defaultBg, Brush highlightBg, string mode)
+        {
+            _defaultBrush = defaultBg;
+            _highlightBrush = highlightBg;
+
+            bool isLight = mode == "light";
+            var fg = isLight ? Brushes.Black : Brushes.White;
+            var bg = isLight ? Brushes.White : new SolidColorBrush(Color.FromArgb(200, 30, 30, 30)); // match mainwindow
+
+            this.Background = Brushes.Transparent;
+
+            RootBorder.Background = bg;
+
+            foreach (var child in IconPanel.Children)
+            {
+                if (child is Button btn)
+                {
+                    btn.Background = _defaultBrush;
+                    btn.Foreground = fg;
+                }
             }
         }
 
@@ -153,10 +279,7 @@ namespace DeskOp
             int interval = durationMs / frames;
             int currentFrame = 0;
 
-            DispatcherTimer timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(interval)
-            };
+            DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(interval) };
 
             timer.Tick += (s, e) =>
             {
@@ -183,5 +306,23 @@ namespace DeskOp
         }
 
         private double EaseOutQuad(double t) => t * (2 - t);
+
+        private const int SWP_NOMOVE = 0x0002;
+        private const int SWP_NOSIZE = 0x0001;
+        private const int SWP_NOACTIVATE = 0x0010;
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
+
+        private static readonly IntPtr HWND_BOTTOM = new(1);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
     }
 }

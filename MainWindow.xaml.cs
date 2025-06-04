@@ -19,6 +19,9 @@ namespace DeskOp
         private double _fullOpacity = 1.0;
         private TimeSpan _fadeDuration = TimeSpan.FromMilliseconds(120);
         private string _currentThemeMode = "dark";
+        private string _currentFilter = "None";
+
+        private BottomWindow? _bottomWindow;
 
         public MainWindow()
         {
@@ -30,25 +33,18 @@ namespace DeskOp
         {
             IntPtr hwnd = new WindowInteropHelper(this).Handle;
 
-            // Set tool window and prevent activation
             int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
             exStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
             SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
 
-            // Detect Wallpaper Engine
             bool wallpaperEngineRunning = IsWallpaperEngineRunning();
-
             if (!wallpaperEngineRunning)
             {
-                // Set parent to Progman to dock below icons
                 IntPtr progman = FindWindow("Progman", null);
                 if (progman != IntPtr.Zero)
-                {
                     SetParent(hwnd, progman);
-                }
             }
 
-            // Push to bottom
             SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         }
@@ -98,6 +94,8 @@ namespace DeskOp
 
             if (_selectedButton is not null)
                 _selectedButton.Background = _selectedBrush;
+
+            SyncThemeToBottomWindow();
         }
 
         private void ApplySelectedHighlight(Brush brush)
@@ -118,6 +116,8 @@ namespace DeskOp
 
                 animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
             }
+
+            SyncThemeToBottomWindow();
         }
 
         private void ApplyThemeMode(string mode)
@@ -145,6 +145,13 @@ namespace DeskOp
                     }
                 }
             }
+
+            SyncThemeToBottomWindow();
+        }
+
+        private void SyncThemeToBottomWindow()
+        {
+            _bottomWindow?.ApplyTheme(_defaultBrush, _selectedBrush, _currentThemeMode);
         }
 
         private void ModeButton_Click(object sender, RoutedEventArgs e)
@@ -169,6 +176,31 @@ namespace DeskOp
                 };
 
                 animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
+
+                _currentFilter = clickedButton.Tag?.ToString() ?? "None";
+
+                if (_currentFilter == "None")
+                {
+                    _bottomWindow?.Hide(); // 🫥 Hide if None selected
+                }
+                else
+                {
+                    if (_bottomWindow is null)
+                    {
+                        _bottomWindow = new BottomWindow();
+                        _bottomWindow.SetTheme(_defaultBrush, _selectedBrush);
+                        _bottomWindow.LoadIcons(_currentFilter);
+                        _bottomWindow.ApplyTheme(_defaultBrush, _selectedBrush, _currentThemeMode);
+                        _bottomWindow.Show();
+                    }
+                    else
+                    {
+                        _bottomWindow.ApplyFilter(_currentFilter);
+                        SyncThemeToBottomWindow();
+                        if (!_bottomWindow.IsVisible)
+                            _bottomWindow.Show(); // 📣 Redisplay if it was hidden
+                    }
+                }
             }
         }
 

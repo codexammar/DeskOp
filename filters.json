@@ -1,0 +1,5 @@
+{
+  "Games": ["steam", "epic", "battle.net", "riot", "games", "gog"],
+  "Productivity": ["word", "excel", "notion", "onenote", "vscode", "teams"],
+  "Docs": ["pdf", "docx", "txt", "markdown", "html"]
+}

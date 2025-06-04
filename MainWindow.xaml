@@ -11,23 +11,23 @@
         SizeToContent="WidthAndHeight"
         MouseDown="Window_MouseDown"
         Loaded="Window_Loaded">
-        <Window.ContextMenu>
-            <ContextMenu>
-                <MenuItem Header="Settings" Click="OpenSettings_Click"/>
-            </ContextMenu>
-        </Window.ContextMenu>
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Settings" Click="OpenSettings_Click"/>
+        </ContextMenu>
+    </Window.ContextMenu>
 
     <Border Background="#CC1E1E1E"
             Margin="10"
             Padding="4"
             CornerRadius="20">
-        <!-- ✅ Fixed Drop Shadow -->
+        <!-- ✅ Drop Shadow -->
         <Border.Effect>
             <DropShadowEffect Color="Black" BlurRadius="10" ShadowDepth="0" Opacity="0.4"/>
         </Border.Effect>
 
         <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-            <!-- 🎨 Shared Button Style -->
+            <!-- 🎨 Button Style -->
             <WrapPanel.Resources>
                 <Style TargetType="Button" x:Key="ModeButtonStyle">
                     <Setter Property="Background" Value="#292B2F"/>
@@ -55,29 +55,7 @@
                 </Style>
             </WrapPanel.Resources>
 
-            <!-- 🎮 Buttons -->
-            <Button Style="{StaticResource ModeButtonStyle}"
-                    Click="ModeButton_Click"
-                    Tag="Games"
-                    MouseEnter="ModeButton_MouseEnter"
-                    MouseLeave="ModeButton_MouseLeave">
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Games" FontSize="12"/>
-                </StackPanel>
-            </Button>
-
-            <Button Style="{StaticResource ModeButtonStyle}"
-                    Click="ModeButton_Click"
-                    Tag="Productivity"
-                    MouseEnter="ModeButton_MouseEnter"
-                    MouseLeave="ModeButton_MouseLeave">
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
-                    <TextBlock Text="💼" FontSize="20" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Productivity" FontSize="12"/>
-                </StackPanel>
-            </Button>
-
+            <!-- 🚫 None -->
             <Button Style="{StaticResource ModeButtonStyle}"
                     Click="ModeButton_Click"
                     Tag="None"
@@ -89,6 +67,43 @@
                 </StackPanel>
             </Button>
 
+            <!-- 🎮 Games -->
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="Games"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                    <TextBlock Text="🎮" FontSize="20" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Games" FontSize="12"/>
+                </StackPanel>
+            </Button>
+
+            <!-- 💼 Productivity -->
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="Productivity"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                    <TextBlock Text="💼" FontSize="20" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Productivity" FontSize="12"/>
+                </StackPanel>
+            </Button>
+
+            <!-- 📄 Docs -->
+            <Button Style="{StaticResource ModeButtonStyle}"
+                    Click="ModeButton_Click"
+                    Tag="Docs"
+                    MouseEnter="ModeButton_MouseEnter"
+                    MouseLeave="ModeButton_MouseLeave">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                    <TextBlock Text="📄" FontSize="20" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Docs" FontSize="12"/>
+                </StackPanel>
+            </Button>
+
+            <!-- 🧩 All -->
             <Button Style="{StaticResource ModeButtonStyle}"
                     Click="ModeButton_Click"
                     Tag="All"
