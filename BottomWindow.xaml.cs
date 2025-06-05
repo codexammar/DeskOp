@@ -185,7 +185,27 @@ namespace DeskOp
                     if (!string.IsNullOrWhiteSpace(target))
                     {
                         searchTerms.Add(target.ToLower());
-                        iconPath = target;
+
+                        // 🧠 Check if the target is a launcher like Update.exe and arguments hint at a real app
+                        if (Path.GetFileName(target).Equals("Update.exe", StringComparison.OrdinalIgnoreCase) &&
+                            !string.IsNullOrWhiteSpace(args) && args.Contains("processStart"))
+                        {
+                            var parts = args.Split(' ');
+                            int idx = Array.FindIndex(parts, p => p.Equals("processStart", StringComparison.OrdinalIgnoreCase));
+                            if (idx != -1 && idx + 1 < parts.Length)
+                            {
+                                var actualApp = parts[idx + 1];
+                                var discordPath = Path.Combine(Path.GetDirectoryName(target)!, actualApp);
+                                if (File.Exists(discordPath))
+                                {
+                                    iconPath = discordPath;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            iconPath = target;
+                        }
                     }
                     if (!string.IsNullOrWhiteSpace(args)) searchTerms.Add(args.ToLower());
                     if (!string.IsNullOrWhiteSpace(startIn)) searchTerms.Add(startIn.ToLower());
