@@ -214,7 +214,22 @@ namespace DeskOp
                 else if (path.EndsWith(".url", StringComparison.OrdinalIgnoreCase))
                 {
                     var url = GetUrlFromInternetShortcut(path);
-                    if (!string.IsNullOrWhiteSpace(url)) searchTerms.Add(url.ToLower());
+                    if (!string.IsNullOrWhiteSpace(url))
+                        searchTerms.Add(url.ToLower());
+
+                    // 🧠 NEW: Try to extract IconFile from .url
+                    string[] lines = File.ReadAllLines(path);
+                    foreach (var line in lines)
+                    {
+                        if (line.StartsWith("IconFile=", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string iconFile = line.Substring("IconFile=".Length).Trim();
+                            if (File.Exists(iconFile))
+                            {
+                                iconPath = iconFile;
+                            }
+                        }
+                    }
                 }
 
                 if (ShouldIncludeAny(searchTerms, category))
