@@ -218,25 +218,12 @@ namespace DeskOp
                         VerticalAlignment = VerticalAlignment.Center
                     };
 
-                    ImageSource? iconSource;
-                    string iconExt = Path.GetExtension(iconPath!).ToLower();
-
-                    if (iconExt == ".url")
-                    {
-                        iconSource = GetShellIcon(iconPath) ?? GetIconImage(iconPath);
-                    }
-                    else
-                    {
-                        iconSource = GetHighResIcon(iconPath) ?? GetIconImage(iconPath);
-                    }
-
                     var iconImage = new Image
                     {
                         Width = 48,
                         Height = 48,
-                        Source = iconSource,
-                        Margin = new Thickness(0, 0, 0, 4),
-                        Stretch = Stretch.Uniform // Makes sure small icons scale properly
+                        Source = GetHighResIcon(iconPath) ?? GetIconImage(iconPath),
+                        Margin = new Thickness(0, 0, 0, 4)
                     };
 
                     var label = new TextBlock
@@ -280,15 +267,8 @@ namespace DeskOp
                 var shellFile = ShellFile.FromFilePath(filePath);
                 var bitmap = shellFile.Thumbnail.ExtraLargeBitmapSource;
 
-                if (bitmap == null)
-                    return null;
-
-                bitmap.Freeze();
-
-                // 👇 Skip bad thumbnails (empty, pixel garbage, unusable sizes)
-                if (bitmap.PixelWidth < 32 || bitmap.PixelHeight < 32 || 
-                    (bitmap.PixelWidth == bitmap.PixelHeight && bitmap.PixelWidth <= 2))
-                    return null;
+                if (bitmap != null)
+                    bitmap.Freeze(); // Prevents UI threading issues
 
                 return bitmap;
             }
@@ -317,31 +297,6 @@ namespace DeskOp
             {
                 return null;
             }
-        }
-
-        private ImageSource? GetShellIcon(string filePath)
-        {
-            const uint SHGFI_SYSICONINDEX = 0x000004000;
-            const uint SHGFI_ICON = 0x000000100;
-            const uint SHGFI_LARGEICON = 0x000000000;
-
-            SHFILEINFO shinfo = new();
-
-            IntPtr hImg = SHGetFileInfo(filePath, 0, ref shinfo,
-                (uint)Marshal.SizeOf(shinfo), SHGFI_ICON | SHGFI_LARGEICON | SHGFI_SYSICONINDEX);
-
-            if (shinfo.hIcon != IntPtr.Zero)
-            {
-                var iconSource = Imaging.CreateBitmapSourceFromHIcon(
-                    shinfo.hIcon,
-                    Int32Rect.Empty,
-                    BitmapSizeOptions.FromWidthAndHeight(64, 64));
-
-                DestroyIcon(shinfo.hIcon);
-                return iconSource;
-            }
-
-            return null;
         }
 
         private bool ShouldInclude(string name, string category)
