@@ -1,5 +1,5 @@
 {
-  "DefaultColorHex": "#FF292B2F",
+  "DefaultColorHex": "#FFFFFFFF",
   "SelectedColorHex": "#FF68DBFF",
-  "Mode": "dark"
+  "Mode": "light"
 }
