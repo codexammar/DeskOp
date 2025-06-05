@@ -129,8 +129,8 @@ namespace DeskOp
     }
     public class ThemeSettings
     {
-        public string DefaultColorHex { get; set; } = "#292B2F";
-        public string SelectedColorHex { get; set; } = "#2ECC71";
+        public string DefaultColorHex { get; set; } = "#FF292B2F"; // Opaque dark
+        public string SelectedColorHex { get; set; } = "#FF2ECC71";
         public string Mode { get; set; } = "dark";
     }
 }

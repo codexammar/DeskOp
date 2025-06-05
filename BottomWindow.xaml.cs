@@ -495,7 +495,7 @@ namespace DeskOp
 
             bool isLight = mode == "light";
             var fg = isLight ? Brushes.Black : Brushes.White;
-            var bg = isLight ? Brushes.White : new SolidColorBrush(Color.FromArgb(200, 30, 30, 30));
+            var bg = isLight ? Brushes.White : (Brush)new BrushConverter().ConvertFrom("#FF292B2F")!; // Opaque dark
 
             this.Background = Brushes.Transparent;
             RootBorder.Background = bg;
@@ -504,7 +504,7 @@ namespace DeskOp
             {
                 if (child is Button btn)
                 {
-                    btn.Background = _defaultBrush;
+                    btn.Background = bg; // Match RootBorder
                     btn.Foreground = fg;
                 }
             }

@@ -17,7 +17,7 @@
         </ContextMenu>
     </Window.ContextMenu>
 
-    <Border Background="#CC1E1E1E"
+    <Border Background="#FF292B2F"
             Margin="10"
             Padding="4"
             CornerRadius="20">
@@ -30,7 +30,7 @@
             <!-- 🎨 Button Style -->
             <WrapPanel.Resources>
                 <Style TargetType="Button" x:Key="ModeButtonStyle">
-                    <Setter Property="Background" Value="#292B2F"/>
+                    <Setter Property="Background" Value="#FF292B2F"/>
                     <Setter Property="Foreground" Value="White"/>
                     <Setter Property="FontSize" Value="14"/>
                     <Setter Property="FontFamily" Value="Segoe UI"/>

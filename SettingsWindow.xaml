@@ -22,7 +22,7 @@
         </Style>
     </Window.Resources>
 
-    <Border Background="#2A2A2A" CornerRadius="10" SnapsToDevicePixels="True">
+    <Border Background="#FF292B2F" CornerRadius="10" SnapsToDevicePixels="True">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="40"/>

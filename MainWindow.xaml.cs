@@ -147,7 +147,7 @@ namespace DeskOp
             _currentThemeMode = mode;
             bool isLight = mode == "light";
 
-            var bg = isLight ? Brushes.White : (Brush)new BrushConverter().ConvertFrom("#CC1E1E1E")!;
+            var bg = isLight ? Brushes.White : (Brush)new BrushConverter().ConvertFrom("#FF292B2F")!;
             var fg = isLight ? Brushes.Black : Brushes.White;
 
             if (Content is Border root)

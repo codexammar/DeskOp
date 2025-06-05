@@ -13,7 +13,7 @@
         MouseMove="Window_MouseMove"
         MouseLeftButtonUp="Window_MouseLeftButtonUp">
     <Border x:Name="RootBorder"
-            Background="#CC1E1E1E"
+            Background="#FF292B2F"
             CornerRadius="12"
             Padding="12"
             Margin="10"
