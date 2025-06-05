@@ -29,8 +29,8 @@ namespace DeskOp
             if (e.NewValue.HasValue)
             {
                 var newBrush = new SolidColorBrush(e.NewValue.Value);
-                currentSettings.SelectedColorHex = e.NewValue.Value.ToString(); // ← update config
-                SaveSettings(); // ← write to disk
+                currentSettings.SelectedColorHex = e.NewValue.Value.ToString();
+                SaveSettings();
 
                 OnSelectedColorChanged?.Invoke(newBrush);
                 OnSelectedButtonColorSelected?.Invoke(newBrush);

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         Title="Settings"
-        Height="440"
+        Height="540"
         Width="460"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -13,12 +13,20 @@
         AllowDrop="True"
         Drop="Window_Drop"
         MouseDown="TitleBar_MouseDown">
+    <Window.Resources>
+        <Style TargetType="{x:Type xctk:ColorPicker}">
+            <Setter Property="Background" Value="#1E1E1E"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#444"/>
+            <Setter Property="Padding" Value="4"/>
+        </Style>
+    </Window.Resources>
 
     <Border Background="#2A2A2A" CornerRadius="10" SnapsToDevicePixels="True">
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="40"/> <!-- Top bar -->
-                <RowDefinition Height="*"/>  <!-- Main content -->
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
             <!-- 🟩 Title Bar -->
@@ -43,49 +51,49 @@
                         Click="Close_Click"/>
             </Grid>
 
-            <!-- 🟨 Main Content -->
-            <StackPanel Grid.Row="1" Margin="20,10,20,20" HorizontalAlignment="Center">
-                <!-- Theme Mode -->
-                <TextBlock Text="Theme Mode" FontSize="16" FontWeight="Bold" Foreground="White"/>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,20">
-                    <RadioButton x:Name="DarkModeRadio" Content="Dark" GroupName="ThemeMode" IsChecked="True" Checked="ThemeMode_Checked"
-                                 Tag="dark" Foreground="White" Margin="10,0"/>
-                    <RadioButton x:Name="LightModeRadio" Content="Light" GroupName="ThemeMode" Checked="ThemeMode_Checked"
-                                 Tag="light" Foreground="White" Margin="10,0"/>
-                </StackPanel>
-
-                <!-- Color Picker -->
-                <TextBlock Text="Select Color for Selected Button" FontSize="16" FontWeight="Bold" Foreground="White"/>
-                <xctk:ColorPicker Name="SelectedColorPicker"
-                                  Width="260"
-                                  Height="40"
-                                  Margin="0,8,0,20"
-                                  SelectedColorChanged="SelectedColorPicker_SelectedColorChanged"
-                                  UsingAlphaChannel="False"
-                                  AvailableColorsSortingMode="Alphabetical"
-                                  ShowAvailableColors="True"
-                                  Background="#1E1E1E"
-                                  Foreground="White"/>
-
-                <!-- Plugin Drop Zone -->
-                <TextBlock Text="Drag &amp; Drop Plugins Below" FontSize="16" FontWeight="Bold" Foreground="White"/>
-                <Border Height="100" Width="360" BorderBrush="Gray" BorderThickness="2" CornerRadius="10"
-                        Background="#333333" Margin="0,8,0,20">
-                    <StackPanel x:Name="PluginList" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <TextBlock Text="Drop plugin files here..." Foreground="Gray" HorizontalAlignment="Center"/>
+            <!-- 🟨 Scrollable Content -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="20,10,20,20" HorizontalAlignment="Center">
+                    <!-- Theme Mode -->
+                    <TextBlock Text="Theme Mode" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,20">
+                        <RadioButton x:Name="DarkModeRadio" Content="Dark" GroupName="ThemeMode" IsChecked="True" Checked="ThemeMode_Checked"
+                                     Tag="dark" Foreground="White" Margin="10,0"/>
+                        <RadioButton x:Name="LightModeRadio" Content="Light" GroupName="ThemeMode" Checked="ThemeMode_Checked"
+                                     Tag="light" Foreground="White" Margin="10,0"/>
                     </StackPanel>
-                </Border>
 
-                <!-- Close Button (Backup) -->
-                <Button Content="Close"
-                        Width="100"
-                        Height="30"
-                        Click="Close_Click"
-                        Background="#3A3D41"
-                        Foreground="White"
-                        Cursor="Hand"
-                        HorizontalAlignment="Center"/>
-            </StackPanel>
+                    <!-- Color Picker -->
+                    <TextBlock Text="Select Color for Selected Button" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    <xctk:ColorCanvas Name="SelectedColorCanvas"
+                                      Width="260"
+                                      Height="240"
+                                      Margin="0,8,0,20"
+                                      SelectedColorChanged="SelectedColorPicker_SelectedColorChanged"
+                                      Background="#1E1E1E"
+                                      Foreground="White"
+                                      BorderBrush="#555"/>
+
+                    <!-- Plugin Drop Zone -->
+                    <TextBlock Text="Drag &amp; Drop Plugins Below" FontSize="16" FontWeight="Bold" Foreground="White"/>
+                    <Border Height="100" Width="360" BorderBrush="Gray" BorderThickness="2" CornerRadius="10"
+                            Background="#333333" Margin="0,8,0,20">
+                        <StackPanel x:Name="PluginList" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <TextBlock Text="Drop plugin files here..." Foreground="Gray" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Close Button -->
+                    <Button Content="Close"
+                            Width="100"
+                            Height="30"
+                            Click="Close_Click"
+                            Background="#3A3D41"
+                            Foreground="White"
+                            Cursor="Hand"
+                            HorizontalAlignment="Center"/>
+                </StackPanel>
+            </ScrollViewer>
         </Grid>
     </Border>
 </Window>
