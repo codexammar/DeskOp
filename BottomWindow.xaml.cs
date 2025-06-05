@@ -50,14 +50,18 @@ namespace DeskOp
             _overlay.Owner = null;
             _overlay.Show();
 
-            bool hasIcons = LoadIcons("None");
+            bool hasIcons = LoadIcons(_currentCategory); // Use current filter category (should be "None" initially)
             int iconCount = IconPanel.Children.Count;
 
-            Rect initial = GetDynamicSnapRect(SnapZone.CenterBottom, iconCount);
-            this.Left = initial.Left;
-            this.Top = initial.Top;
-            this.Width = initial.Width;
-            this.Height = initial.Height;
+            // 🧠 Use saved snap zone for positioning
+            Rect startupRect = GetDynamicSnapRect(_currentSnapZone, iconCount);
+            this.Left = startupRect.Left;
+            this.Top = startupRect.Top;
+            this.Width = startupRect.Width;
+            this.Height = startupRect.Height;
+
+            // Apply layout direction based on zone
+            ApplyOrientationForSnapZone();
 
             LoadIcons("None");
 
