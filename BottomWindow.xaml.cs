@@ -585,7 +585,26 @@ namespace DeskOp
 
         public void ApplyFilter(string category)
         {
-            LoadIcons(category);
+            _currentCategory = category;
+            bool hasIcons = LoadIcons(category);
+
+            if (!hasIcons)
+            {
+                this.HideWithFade();
+                return;
+            }
+
+            int iconCount = IconPanel.Children.Count;
+
+            // 🔁 Recalculate snap layout every time
+            Rect updated = GetDynamicSnapRect(_currentSnapZone, iconCount);
+            AnimateTo(updated);
+
+            _lastSnapRect = updated;
+            _wasSnapped = true;
+
+            ApplyOrientationForSnapZone();
+            this.ShowWithFade();
         }
 
         public void ApplyTheme(System.Windows.Media.Brush defaultBg, System.Windows.Media.Brush highlightBg, string mode)

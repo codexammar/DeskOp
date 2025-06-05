@@ -215,7 +215,8 @@ namespace DeskOp
                         _bottomWindow.ApplyTheme(_defaultBrush, _selectedBrush, _currentThemeMode);
                     }
 
-                    bool hasIcons = _bottomWindow.LoadIcons(_currentFilter);
+                    _bottomWindow.ApplyFilter(_currentFilter);
+                    bool hasIcons = _bottomWindow.IconPanel.Children.Count > 0;
                     SyncThemeToBottomWindow();
 
                     if (hasIcons)
