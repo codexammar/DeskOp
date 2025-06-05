@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Media;
+using System.Runtime.InteropServices;
 
 namespace DeskOp
 {
@@ -12,8 +13,15 @@ namespace DeskOp
         private Brush _selectedBrush = (Brush)new BrushConverter().ConvertFrom("#2ECC71")!;
         private string _category = "None";
 
+        // ✅ Add this: tells Windows you're DPI-aware
+        [DllImport("user32.dll")]
+        private static extern bool SetProcessDPIAware();
+
         protected override void OnStartup(StartupEventArgs e)
         {
+            // ✅ Call it before any windows open
+            SetProcessDPIAware();
+
             base.OnStartup(e);
 
             this.DispatcherUnhandledException += (s, args) =>

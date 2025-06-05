@@ -15,6 +15,7 @@ using System.Linq;
 using DrawingIcon = System.Drawing.Icon;
 using System.Globalization;
 using System.Windows.Media.Imaging;
+using Microsoft.WindowsAPICodePack.Shell;
 
 namespace DeskOp
 {
@@ -221,7 +222,7 @@ namespace DeskOp
                     {
                         Width = 48,
                         Height = 48,
-                        Source = GetIconImage(iconPath),
+                        Source = GetHighResIcon(iconPath) ?? GetIconImage(iconPath),
                         Margin = new Thickness(0, 0, 0, 4)
                     };
 
@@ -259,6 +260,24 @@ namespace DeskOp
             return added > 0;
         }
 
+        private BitmapSource? GetHighResIcon(string filePath)
+        {
+            try
+            {
+                var shellFile = ShellFile.FromFilePath(filePath);
+                var bitmap = shellFile.Thumbnail.ExtraLargeBitmapSource;
+
+                if (bitmap != null)
+                    bitmap.Freeze(); // Prevents UI threading issues
+
+                return bitmap;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private BitmapSource? GetIconImage(string? filePath)
         {
             try
@@ -266,7 +285,7 @@ namespace DeskOp
                 if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
                     return null;
 
-                var icon = DrawingIcon.ExtractAssociatedIcon(filePath);
+                var icon = System.Drawing.Icon.ExtractAssociatedIcon(filePath);
                 if (icon == null) return null;
 
                 return Imaging.CreateBitmapSourceFromHIcon(
@@ -548,5 +567,25 @@ namespace DeskOp
 
         [DllImport("user32.dll")]
         private static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [StructLayout(LayoutKind.Sequential)]
+
+        public struct SHFILEINFO
+        {
+            public IntPtr hIcon;
+            public IntPtr iIcon;
+            public uint dwAttributes;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string szDisplayName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public string szTypeName;
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        public static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes,
+            ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool DestroyIcon(IntPtr hIcon);
     }
 }
