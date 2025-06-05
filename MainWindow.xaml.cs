@@ -7,6 +7,8 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.IO;
+using System.Text.Json;
 
 namespace DeskOp
 {
@@ -25,7 +27,27 @@ namespace DeskOp
 
         public MainWindow()
         {
+            if (File.Exists("theme-settings.json"))
+            {
+                try
+                {
+                    var json = File.ReadAllText("theme-settings.json");
+                    var settings = JsonSerializer.Deserialize<ThemeSettings>(json);
+
+                    if (settings is not null)
+                    {
+                        _defaultBrush = (Brush)new BrushConverter().ConvertFromString(settings.DefaultColorHex)!;
+                        _selectedBrush = (Brush)new BrushConverter().ConvertFromString(settings.SelectedColorHex)!;
+                        _currentThemeMode = settings.Mode;
+                    }
+                }
+                catch
+                {
+                    // Ignore errors, fallback to hardcoded values
+                }
+            }
             InitializeComponent();
+            ApplyThemeMode(_currentThemeMode);
             MouseLeftButtonUp += Window_MouseLeftButtonUp;
         }
 

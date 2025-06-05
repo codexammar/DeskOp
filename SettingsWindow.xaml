@@ -48,9 +48,9 @@
                 <!-- Theme Mode -->
                 <TextBlock Text="Theme Mode" FontSize="16" FontWeight="Bold" Foreground="White"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,20">
-                    <RadioButton Content="Dark" GroupName="ThemeMode" IsChecked="True" Checked="ThemeMode_Checked"
+                    <RadioButton x:Name="DarkModeRadio" Content="Dark" GroupName="ThemeMode" IsChecked="True" Checked="ThemeMode_Checked"
                                  Tag="dark" Foreground="White" Margin="10,0"/>
-                    <RadioButton Content="Light" GroupName="ThemeMode" Checked="ThemeMode_Checked"
+                    <RadioButton x:Name="LightModeRadio" Content="Light" GroupName="ThemeMode" Checked="ThemeMode_Checked"
                                  Tag="light" Foreground="White" Margin="10,0"/>
                 </StackPanel>
 

@@ -4,11 +4,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Input;
+using System.Text.Json;
 
 namespace DeskOp
 {
     public partial class SettingsWindow : Window
     {
+        private readonly string settingsPath = "theme-settings.json";
+        private ThemeSettings currentSettings = new();
         public Action<Brush>? OnBackgroundThemeSelected;
         public Action<Brush>? OnSelectedColorChanged;
         public Action<Brush>? OnSelectedButtonColorSelected;
@@ -18,6 +21,7 @@ namespace DeskOp
         public SettingsWindow()
         {
             InitializeComponent();
+            LoadSettings();
         }
 
         private void SelectedColorPicker_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
@@ -25,6 +29,9 @@ namespace DeskOp
             if (e.NewValue.HasValue)
             {
                 var newBrush = new SolidColorBrush(e.NewValue.Value);
+                currentSettings.SelectedColorHex = e.NewValue.Value.ToString(); // ← update config
+                SaveSettings(); // ← write to disk
+
                 OnSelectedColorChanged?.Invoke(newBrush);
                 OnSelectedButtonColorSelected?.Invoke(newBrush);
             }
@@ -34,13 +41,17 @@ namespace DeskOp
         {
             if (sender is RadioButton rb && rb.Tag is string themeTag)
             {
+                currentSettings.Mode = themeTag; // ← update mode
+
+                var backgroundColor = themeTag == "light"
+                    ? Colors.White
+                    : (Color)ColorConverter.ConvertFromString("#292B2F")!;
+
+                currentSettings.DefaultColorHex = backgroundColor.ToString(); // ← update default
+                SaveSettings(); // ← write to disk
+
                 OnThemeModeChanged?.Invoke(themeTag);
-
-                var backgroundColor = themeTag == "light" 
-                    ? Brushes.White 
-                    : (Brush)new BrushConverter().ConvertFromString("#292B2F")!;
-
-                OnBackgroundThemeSelected?.Invoke(backgroundColor);
+                OnBackgroundThemeSelected?.Invoke(new SolidColorBrush(backgroundColor));
             }
         }
 
@@ -76,5 +87,50 @@ namespace DeskOp
         {
             Close();
         }
+        private void LoadSettings()
+        {
+            try
+            {
+                if (File.Exists(settingsPath))
+                {
+                    string json = File.ReadAllText(settingsPath);
+                    currentSettings = JsonSerializer.Deserialize<ThemeSettings>(json)!;
+
+                    var defaultColor = (Color)ColorConverter.ConvertFromString(currentSettings.DefaultColorHex)!;
+                    var selectedColor = (Color)ColorConverter.ConvertFromString(currentSettings.SelectedColorHex)!;
+
+                    OnBackgroundThemeSelected?.Invoke(new SolidColorBrush(defaultColor));
+                    OnSelectedButtonColorSelected?.Invoke(new SolidColorBrush(selectedColor));
+                    OnThemeModeChanged?.Invoke(currentSettings.Mode);
+                    if (currentSettings.Mode == "light")
+                        LightModeRadio.IsChecked = true;
+                    else
+                        DarkModeRadio.IsChecked = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to load theme settings: {ex.Message}", "DeskOp", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                string json = JsonSerializer.Serialize(currentSettings, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(settingsPath, json);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to save theme settings: {ex.Message}", "DeskOp", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+    }
+    public class ThemeSettings
+    {
+        public string DefaultColorHex { get; set; } = "#292B2F";
+        public string SelectedColorHex { get; set; } = "#2ECC71";
+        public string Mode { get; set; } = "dark";
     }
 }
