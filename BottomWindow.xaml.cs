@@ -30,10 +30,11 @@ namespace DeskOp
         private System.Windows.Point _dragOffset;
         private System.Windows.Media.Brush _defaultBrush = new SolidColorBrush(Color.FromRgb(41, 43, 47));
         private System.Windows.Media.Brush _highlightBrush = new SolidColorBrush(Color.FromRgb(46, 204, 113));
-        private SnapZone _currentSnapZone = SnapZone.CenterBottom; // or any default
+        private SnapZone _currentSnapZone; // ✅ Empty for now
 
         public BottomWindow()
         {
+            _currentSnapZone = LoadSavedSnapZone();
             InitializeComponent();
             LoadFilters();
             this.Opacity = 0;
@@ -109,6 +110,23 @@ namespace DeskOp
             {
                 return (null, null, null, null);
             }
+        }
+
+        private SnapZone LoadSavedSnapZone()
+        {
+            try
+            {
+                string json = File.ReadAllText("theme-settings.json");
+                var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("SnapZone", out var zoneProp))
+                {
+                    if (Enum.TryParse<SnapZone>(zoneProp.GetString(), ignoreCase: true, out var zone))
+                        return zone;
+                }
+            }
+            catch { }
+
+            return SnapZone.Right; // fallback default
         }
 
         private bool ShouldIncludeAny(List<string> candidates, string category)
@@ -452,6 +470,7 @@ namespace DeskOp
         private void SnapToNearestZone()
         {
             _currentSnapZone = DetermineBestSnapZone();
+            SaveSnapZone(_currentSnapZone);
             int iconCount = IconPanel.Children.Count;
             Rect rect = GetDynamicSnapRect(_currentSnapZone, iconCount);
             _lastSnapRect = rect;
@@ -459,6 +478,29 @@ namespace DeskOp
             AnimateTo(rect);
 
             ApplyOrientationForSnapZone(); // 💡 New helper
+        }
+
+        private void SaveSnapZone(SnapZone zone)
+        {
+            try
+            {
+                string path = "theme-settings.json";
+                Dictionary<string, object> settings;
+
+                if (File.Exists(path))
+                {
+                    string existing = File.ReadAllText(path);
+                    settings = JsonSerializer.Deserialize<Dictionary<string, object>>(existing) ?? new();
+                }
+                else settings = new();
+
+                settings["SnapZone"] = zone.ToString();
+                File.WriteAllText(path, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch
+            {
+                MessageBox.Show("Failed to save snap zone.", "DeskOp Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void ApplyOrientationForSnapZone()

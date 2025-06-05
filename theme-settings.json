@@ -1,5 +1,6 @@
 {
   "DefaultColorHex": "#FF292B2F",
   "SelectedColorHex": "#FF68DBFF",
-  "Mode": "dark"
+  "Mode": "dark",
+  "SnapZone": "Right"
 }
