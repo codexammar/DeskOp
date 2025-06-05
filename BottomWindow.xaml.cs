@@ -177,9 +177,6 @@ namespace DeskOp
 
         public bool LoadIcons(string category)
         {
-            IconPanel.Orientation = (_currentSnapZone == SnapZone.Left || _currentSnapZone == SnapZone.Right)
-            ? Orientation.Vertical
-            : Orientation.Horizontal;
 
             _currentCategory = category;
             IconPanel.Children.Clear();
@@ -302,9 +299,16 @@ namespace DeskOp
                 }
             }
 
-            if (added > 0 && !_wasSnapped)
+            if (added > 0)
             {
-                ResizeToFit();
+                // 🔁 Unified grid layout
+                RecalculateGridLayout();
+
+                if (!_wasSnapped)
+                {
+                    ResizeToFit();
+                }
+
                 return true;
             }
 
@@ -460,12 +464,25 @@ namespace DeskOp
             }
         }
 
-        private enum SnapZone { Left, Right, HorizontalStrip, Square, CenterBottom }
+        private enum SnapZone
+        {
+            Left,
+            Right,
+            BottomCenter, // 🔄 Previously: HorizontalStrip
+            Square,
+            TopCenter      // 🔄 Previously: CenterBottom
+        }
 
         private void ShowSnapHintForCurrentPosition()
         {
             SnapZone zone = DetermineBestSnapZone();
             int iconCount = IconPanel.Children.Count;
+
+            // 🔁 Temporarily simulate the zone to recalculate layout
+            SnapZone oldZone = _currentSnapZone;
+            _currentSnapZone = zone;
+            RecalculateGridLayout();
+            _currentSnapZone = oldZone;
 
             Rect previewRect = GetDynamicSnapRect(zone, iconCount);
             _overlay?.ShowHint(previewRect);
@@ -475,13 +492,48 @@ namespace DeskOp
         {
             _currentSnapZone = DetermineBestSnapZone();
             SaveSnapZone(_currentSnapZone);
+
+            // 🔧 Recalculate grid layout BEFORE calculating snap rect
+            RecalculateGridLayout();
+
             int iconCount = IconPanel.Children.Count;
             Rect rect = GetDynamicSnapRect(_currentSnapZone, iconCount);
             _lastSnapRect = rect;
             _wasSnapped = true;
             AnimateTo(rect);
 
-            ApplyOrientationForSnapZone(); // 💡 New helper
+            ApplyOrientationForSnapZone();
+        }
+
+        private void RecalculateGridLayout()
+        {
+            int iconCount = IconPanel.Children.Count;
+            int rows, cols;
+
+            if (_currentSnapZone == SnapZone.Left || _currentSnapZone == SnapZone.Right)
+            {
+                // 🔁 Vertical layout: tall column
+                int maxHeight = (int)(SystemParameters.PrimaryScreenHeight * 0.8);
+                int maxRows = Math.Max(1, maxHeight / 112);
+                rows = Math.Min(iconCount, maxRows);
+                cols = (int)Math.Ceiling((double)iconCount / rows);
+            }
+            else if (_currentSnapZone == SnapZone.BottomCenter || _currentSnapZone == SnapZone.TopCenter)
+            {
+                // 📏 Horizontal layout: wide row
+                int maxWidth = (int)(SystemParameters.PrimaryScreenWidth * 0.95);
+                int maxCols = Math.Max(1, maxWidth / 112);
+                cols = Math.Min(iconCount, maxCols);
+                rows = (int)Math.Ceiling((double)iconCount / cols);
+            }
+            else
+            {
+                // 🟦 Square or fallback
+                rows = cols = (int)Math.Ceiling(Math.Sqrt(iconCount));
+            }
+
+            IconPanel.Rows = rows;
+            IconPanel.Columns = cols;
         }
 
         private void SaveSnapZone(SnapZone zone)
@@ -509,19 +561,10 @@ namespace DeskOp
 
         private void ApplyOrientationForSnapZone()
         {
-            IconPanel.Orientation = (_currentSnapZone == SnapZone.Left || _currentSnapZone == SnapZone.Right)
-                ? Orientation.Vertical
-                : Orientation.Horizontal;
-
-            // Optional: center-align in horizontal mode
-            if (_currentSnapZone == SnapZone.CenterBottom || _currentSnapZone == SnapZone.HorizontalStrip)
-            {
-                IconPanel.HorizontalAlignment = HorizontalAlignment.Center;
-            }
-            else
-            {
-                IconPanel.HorizontalAlignment = HorizontalAlignment.Left;
-            }
+            IconPanel.HorizontalAlignment =
+                (_currentSnapZone == SnapZone.BottomCenter || _currentSnapZone == SnapZone.TopCenter)
+                ? HorizontalAlignment.Center
+                : HorizontalAlignment.Left;
         }
 
         private SnapZone DetermineBestSnapZone()
@@ -539,11 +582,11 @@ namespace DeskOp
 
             var distances = new (SnapZone, double)[]
             {
-                (SnapZone.Left, Dist(left, top, screenWidth * 0.15, centerY)),
-                (SnapZone.Right, Dist(left, top, screenWidth * 0.85, centerY)),
-                (SnapZone.HorizontalStrip, Dist(left, top, centerX, screenHeight - 60)),
-                (SnapZone.Square, Dist(left, top, centerX, centerY)),
-                (SnapZone.CenterBottom, Dist(left, top, centerX, screenHeight * 0.85))
+                (SnapZone.Left,         Dist(left, top, screenWidth * 0.15, centerY)),
+                (SnapZone.Right,        Dist(left, top, screenWidth * 0.85, centerY)),
+                (SnapZone.BottomCenter, Dist(left, top, centerX, screenHeight - 60)),
+                (SnapZone.Square,       Dist(left, top, centerX, centerY)),
+                (SnapZone.TopCenter,    Dist(left, top, centerX, screenHeight * 0.15))
             };
 
             Array.Sort(distances, (a, b) => a.Item2.CompareTo(b.Item2));
@@ -554,31 +597,23 @@ namespace DeskOp
         {
             double screenWidth = SystemParameters.PrimaryScreenWidth;
             double screenHeight = SystemParameters.PrimaryScreenHeight;
+            double verticalOffset = 60; // Half inch gap
             double padding = 40;
+            double tileFull = 112; // 100 + 12 spacing
 
-            // Tile layout assumptions
-            double tileSize = 100;
-            double tileSpacing = 12;
-            double tileFullHeight = tileSize + tileSpacing;
-            double tileFullWidth = tileSize + tileSpacing;
+            int rows = IconPanel.Rows;
+            int cols = IconPanel.Columns;
 
-            double maxHeight = screenHeight * 0.8;
-            int maxRows = (int)Math.Floor(maxHeight / tileFullHeight);
-            maxRows = Math.Max(1, maxRows); // Always at least 1 row
-
-            int requiredColumns = (int)Math.Ceiling((double)iconCount / maxRows);
-            int actualRows = Math.Min(iconCount, maxRows);
-
-            double finalWidth = requiredColumns * tileFullWidth + padding;
-            double finalHeight = actualRows * tileFullHeight + padding;
+            double finalWidth = cols * tileFull + padding;
+            double finalHeight = rows * tileFull + padding;
 
             return zone switch
             {
                 SnapZone.Left => new Rect(padding, screenHeight * 0.1, finalWidth, finalHeight),
                 SnapZone.Right => new Rect(screenWidth - finalWidth - padding, screenHeight * 0.1, finalWidth, finalHeight),
-                SnapZone.HorizontalStrip => new Rect((screenWidth - 600) / 2, screenHeight - 200 - padding, 600, 200), // unchanged
-                SnapZone.Square => new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400), // unchanged
-                SnapZone.CenterBottom => new Rect((screenWidth - finalWidth) / 2, screenHeight - finalHeight - padding, finalWidth, finalHeight),
+                SnapZone.BottomCenter => new Rect((screenWidth - finalWidth) / 2, screenHeight - finalHeight - verticalOffset, finalWidth, finalHeight),
+                SnapZone.TopCenter    => new Rect((screenWidth - finalWidth) / 2, verticalOffset, finalWidth, finalHeight),
+                SnapZone.Square => new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400),
                 _ => Rect.Empty
             };
         }

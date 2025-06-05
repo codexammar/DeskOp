@@ -24,9 +24,12 @@
 
         <ScrollViewer VerticalScrollBarVisibility="Disabled"
                     HorizontalScrollBarVisibility="Disabled">
-            <WrapPanel x:Name="IconPanel"
-                    Margin="6"
-                    Orientation="Horizontal" />
+            <UniformGrid x:Name="IconPanel"
+             Rows="1"
+             Columns="1"
+             HorizontalAlignment="Center"
+             VerticalAlignment="Center"
+             Margin="10" />
         </ScrollViewer>
     </Border>
 </Window>
