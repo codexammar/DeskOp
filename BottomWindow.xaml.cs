@@ -63,8 +63,6 @@ namespace DeskOp
             // Apply layout direction based on zone
             ApplyOrientationForSnapZone();
 
-            LoadIcons("None");
-
             var hwnd = new WindowInteropHelper(this).Handle;
 
             int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
@@ -411,8 +409,7 @@ namespace DeskOp
             {
                 this.Left = _lastSnapRect.Value.Left;
                 this.Top = _lastSnapRect.Value.Top;
-                this.Width = _lastSnapRect.Value.Width;
-                this.Height = _lastSnapRect.Value.Height;
+                // ⚠️ Remove this.Width / Height reset
             }
 
             this.Visibility = Visibility.Visible;
