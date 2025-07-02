@@ -398,7 +398,16 @@ namespace DeskOp
                 double width = Math.Min(desired.Width + chromePadding, SystemParameters.PrimaryScreenWidth - 60);
                 double height = Math.Min(desired.Height + chromePadding, SystemParameters.PrimaryScreenHeight - 60);
 
-                AnimateTo(new Rect(this.Left, this.Top, width, height));
+                // 🧠 If not visible, skip animation and set size instantly
+                if (this.Visibility != Visibility.Visible || this.Opacity <= 0)
+                {
+                    this.Width = width;
+                    this.Height = height;
+                }
+                else
+                {
+                    AnimateTo(new Rect(this.Left, this.Top, width, height));
+                }
             }, DispatcherPriority.Loaded);
         }
 
@@ -514,6 +523,9 @@ namespace DeskOp
                 int maxRows = Math.Max(1, maxHeight / 112);
                 rows = Math.Min(iconCount, maxRows);
                 cols = (int)Math.Ceiling((double)iconCount / rows);
+
+                // ✅ Adjust to remove empty rows
+                rows = (int)Math.Ceiling((double)iconCount / cols);
             }
             else if (_currentSnapZone == SnapZone.BottomCenter || _currentSnapZone == SnapZone.TopCenter)
             {
@@ -522,11 +534,16 @@ namespace DeskOp
                 int maxCols = Math.Max(1, maxWidth / 112);
                 cols = Math.Min(iconCount, maxCols);
                 rows = (int)Math.Ceiling((double)iconCount / cols);
+
+                // ✅ Adjust to remove empty rows
+                if ((rows - 1) * cols >= iconCount)
+                    rows--;
             }
             else
             {
                 // 🟦 Square or fallback
-                rows = cols = (int)Math.Ceiling(Math.Sqrt(iconCount));
+                cols = (int)Math.Ceiling(Math.Sqrt(iconCount));
+                rows = (int)Math.Ceiling((double)iconCount / cols);
             }
 
             IconPanel.Rows = rows;
