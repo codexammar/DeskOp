@@ -22,14 +22,11 @@
             <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1" CenterX="0.5" CenterY="0.5"/>
         </Border.RenderTransform>
 
-        <ScrollViewer VerticalScrollBarVisibility="Disabled"
-                    HorizontalScrollBarVisibility="Disabled">
+        <Grid>
             <UniformGrid x:Name="IconPanel"
-             Rows="1"
-             Columns="1"
              HorizontalAlignment="Center"
              VerticalAlignment="Center"
              Margin="10" />
-        </ScrollViewer>
+        </Grid>
     </Border>
 </Window>

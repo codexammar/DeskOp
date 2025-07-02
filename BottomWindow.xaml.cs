@@ -396,9 +396,9 @@ namespace DeskOp
                 IconPanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                 Size desired = IconPanel.DesiredSize;
 
-                double padding = 40;
-                double width = Math.Min(desired.Width + padding, SystemParameters.PrimaryScreenWidth - 100);
-                double height = Math.Min(desired.Height + padding, SystemParameters.PrimaryScreenHeight - 100);
+                double chromePadding = 12 + 12 + 10 + 10; // Border.Padding + Border.Margin
+                double width = Math.Min(desired.Width + chromePadding, SystemParameters.PrimaryScreenWidth - 60);
+                double height = Math.Min(desired.Height + chromePadding, SystemParameters.PrimaryScreenHeight - 60);
 
                 AnimateTo(new Rect(this.Left, this.Top, width, height));
             }, DispatcherPriority.Loaded);
@@ -629,15 +629,10 @@ namespace DeskOp
                 return;
             }
 
-            int iconCount = IconPanel.Children.Count;
+            RecalculateGridLayout();
+            ResizeToFit(); // Dynamically resizes window to fit icons
 
-            // 🔁 Recalculate snap layout every time
-            Rect updated = GetDynamicSnapRect(_currentSnapZone, iconCount);
-            AnimateTo(updated);
-
-            _lastSnapRect = updated;
             _wasSnapped = true;
-
             ApplyOrientationForSnapZone();
             this.ShowWithFade();
         }
