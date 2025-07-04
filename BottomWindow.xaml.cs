@@ -683,12 +683,24 @@ namespace DeskOp
             _wasSnapped = true;
             int iconCount = IconPanel.Children.Count;
             Rect snapRect = GetDynamicSnapRect(_currentSnapZone, iconCount);
-            FadeAndSnapTo(snapRect);
+
+            // Quick fade out
+            var fadeOut = new DoubleAnimation(0, TimeSpan.FromMilliseconds(100));
+            fadeOut.Completed += (s, e) =>
+            {
+                // Set new position instantly when faded out
+                this.Left = snapRect.Left;
+                this.Top = snapRect.Top;
+                this.Width = snapRect.Width;
+                this.Height = snapRect.Height;
+
+                // Fade back in
+                var fadeIn = new DoubleAnimation(1, TimeSpan.FromMilliseconds(100));
+                this.BeginAnimation(Window.OpacityProperty, fadeIn);
+            };
+            this.BeginAnimation(Window.OpacityProperty, fadeOut);
 
             ApplyOrientationForSnapZone();
-
-            // ❌ Don't call ShowWithFade() here
-            // AnimateTo already fades in after snapping
         }
 
         public void ApplyTheme(Brush defaultBg, Brush highlightBg, string mode)
