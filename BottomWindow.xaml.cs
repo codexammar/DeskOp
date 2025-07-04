@@ -31,6 +31,13 @@ namespace DeskOp
         private System.Windows.Media.Brush _defaultBrush = new SolidColorBrush(Color.FromRgb(41, 43, 47));
         private System.Windows.Media.Brush _highlightBrush = new SolidColorBrush(Color.FromRgb(46, 204, 113));
         private SnapZone _currentSnapZone; // ✅ Empty for now
+        // 📐 Tile size constants (used to prevent spacing/cutoff issues)
+        private const double TILE_WIDTH = 112;
+        private const double TILE_HEIGHT = 112;
+        private const double TILE_SPACING = 6; // horizontal/vertical gap between columns/rows
+        private const double TILE_TOTAL_WIDTH = TILE_WIDTH;  // ⚠️ Ignore Margin
+        private const double TILE_TOTAL_HEIGHT = TILE_HEIGHT;
+        private const double EXTRA_PADDING = 30;  // additional buffer to avoid cutoff
 
         public BottomWindow()
         {
@@ -251,12 +258,15 @@ namespace DeskOp
 
                 if (ShouldIncludeAny(searchTerms, category))
                 {
+                    const double TILE_WIDTH = 112;
+                    const double TILE_HEIGHT = 108; // accommodate taller label
+
                     var tile = new Button
                     {
-                        Width = 100,
-                        Height = 100,
-                        Margin = new Thickness(6),
-                        Padding = new Thickness(4),
+                        Width = TILE_WIDTH,
+                        Height = TILE_HEIGHT,
+                        Margin = new Thickness(3), // Add back to get clean spacing
+                        Padding = new Thickness(0),
                         Background = _defaultBrush,
                         Foreground = Brushes.White,
                         Cursor = Cursors.Hand,
@@ -283,8 +293,10 @@ namespace DeskOp
                         Text = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name),
                         TextAlignment = TextAlignment.Center,
                         TextWrapping = TextWrapping.Wrap,
-                        FontSize = 11,
-                        MaxWidth = 90
+                        FontSize = 10.5, // slightly smaller to prevent cutting
+                        MaxWidth = 90,
+                        MaxHeight = 32, // ensures 2-line max wrap
+                        TextTrimming = TextTrimming.CharacterEllipsis
                     };
 
                     stack.Children.Add(iconImage);
@@ -391,16 +403,17 @@ namespace DeskOp
         {
             Dispatcher.InvokeAsync(() =>
             {
-                IconPanel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-                Size desired = IconPanel.DesiredSize;
+                int rows = IconPanel.Rows;
+                int cols = IconPanel.Columns;
 
-                double chromePadding = 12 + 12 + 10 + 10; // Border.Padding + Border.Margin
-                double width = Math.Min(desired.Width + chromePadding, SystemParameters.PrimaryScreenWidth - 60);
-                double height = Math.Min(desired.Height + chromePadding, SystemParameters.PrimaryScreenHeight - 60);
+                double contentW = cols * TILE_WIDTH + (cols - 1) * TILE_SPACING;
+                double contentH = rows * TILE_HEIGHT + (rows - 1) * TILE_SPACING;
 
-                // ✅ Just update size directly here — skip animation
-                this.Width = width;
-                this.Height = height;
+                double width = contentW + RootBorder.Padding.Left + RootBorder.Padding.Right + EXTRA_PADDING;
+                double height = contentH + RootBorder.Padding.Top + RootBorder.Padding.Bottom + EXTRA_PADDING;
+
+                this.Width = Math.Min(width, SystemParameters.PrimaryScreenWidth - 40);
+                this.Height = Math.Min(height, SystemParameters.PrimaryScreenHeight - 40);
             }, DispatcherPriority.Loaded);
         }
 
@@ -606,13 +619,14 @@ namespace DeskOp
             double screenHeight = SystemParameters.PrimaryScreenHeight;
             double verticalOffset = 60; // Half inch gap
             double padding = 40;
-            double tileFull = 112; // 100 + 12 spacing
-
             int rows = IconPanel.Rows;
             int cols = IconPanel.Columns;
 
-            double finalWidth = cols * tileFull + padding;
-            double finalHeight = rows * tileFull + padding;
+            double contentWidth = cols * TILE_TOTAL_WIDTH;
+            double contentHeight = rows * TILE_TOTAL_HEIGHT;
+
+            double finalWidth = contentWidth + RootBorder.Padding.Left + RootBorder.Padding.Right + EXTRA_PADDING;
+            double finalHeight = contentHeight + RootBorder.Padding.Top + RootBorder.Padding.Bottom + EXTRA_PADDING;
 
             return zone switch
             {
