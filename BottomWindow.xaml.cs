@@ -265,12 +265,14 @@ namespace DeskOp
                     {
                         Width = TILE_WIDTH,
                         Height = TILE_HEIGHT,
-                        Margin = new Thickness(3), // Add back to get clean spacing
+                        Margin = new Thickness(3),
                         Padding = new Thickness(0),
                         Background = _defaultBrush,
                         Foreground = Brushes.White,
                         Cursor = Cursors.Hand,
                         BorderThickness = new Thickness(0),
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
                     };
 
                     var stack = new StackPanel
@@ -628,15 +630,39 @@ namespace DeskOp
             double finalWidth = contentWidth + RootBorder.Padding.Left + RootBorder.Padding.Right + EXTRA_PADDING;
             double finalHeight = contentHeight + RootBorder.Padding.Top + RootBorder.Padding.Bottom + EXTRA_PADDING;
 
-            return zone switch
+            Rect snapRect;
+
+            switch (zone)
             {
-                SnapZone.Left => new Rect(padding, screenHeight * 0.1, finalWidth, finalHeight),
-                SnapZone.Right => new Rect(screenWidth - finalWidth - padding, screenHeight * 0.1, finalWidth, finalHeight),
-                SnapZone.BottomCenter => new Rect((screenWidth - finalWidth) / 2, screenHeight - finalHeight - verticalOffset, finalWidth, finalHeight),
-                SnapZone.TopCenter    => new Rect((screenWidth - finalWidth) / 2, verticalOffset, finalWidth, finalHeight),
-                SnapZone.Square => new Rect((screenWidth - 400) / 2, (screenHeight - 400) / 2, 400, 400),
-                _ => Rect.Empty
-            };
+                case SnapZone.Left:
+                    snapRect = new Rect(padding, screenHeight * 0.1, finalWidth, finalHeight);
+                    break;
+
+                case SnapZone.Right:
+                    snapRect = new Rect(screenWidth - finalWidth - padding, screenHeight * 0.1, finalWidth, finalHeight);
+                    break;
+
+                case SnapZone.BottomCenter:
+                    snapRect = new Rect((screenWidth - finalWidth) / 2, screenHeight - finalHeight - verticalOffset, finalWidth, finalHeight);
+                    break;
+
+                case SnapZone.TopCenter:
+                    snapRect = new Rect((screenWidth - finalWidth) / 2, verticalOffset, finalWidth, finalHeight);
+                    break;
+
+                case SnapZone.Square:
+                    double idealSize = Math.Max(finalWidth, finalHeight);
+                    double left = (screenWidth - idealSize) / 2;
+                    double top = (screenHeight - idealSize) / 2;
+                    snapRect = new Rect(left, top, idealSize, idealSize);
+                    break;
+
+                default:
+                    snapRect = Rect.Empty;
+                    break;
+            }
+
+            return snapRect;
         }
 
         public void ApplyFilter(string category)
