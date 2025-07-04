@@ -2,5 +2,8 @@
   "DefaultColorHex": "#FFFFFFFF",
   "SelectedColorHex": "#FF68DBFF",
   "Mode": "light",
-  "SnapZone": "Right"
+  "SnapZone": "Right",
+  "LastFilter": "All",
+  "MainWindowLeft": 666,
+  "MainWindowTop": 35
 }

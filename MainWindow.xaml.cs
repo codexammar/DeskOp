@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.IO;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace DeskOp
 {
@@ -39,16 +40,56 @@ namespace DeskOp
                         _defaultBrush = (Brush)new BrushConverter().ConvertFromString(settings.DefaultColorHex)!;
                         _selectedBrush = (Brush)new BrushConverter().ConvertFromString(settings.SelectedColorHex)!;
                         _currentThemeMode = settings.Mode;
+                        _currentFilter = settings.LastFilter;
+
+                        // Position the MainWindow
+                        this.Left = settings.MainWindowLeft;
+                        this.Top = settings.MainWindowTop;
                     }
                 }
                 catch
                 {
-                    // Ignore errors, fallback to hardcoded values
+                    // Fallback
                 }
             }
             InitializeComponent();
+            HighlightFilterButton(_currentFilter);
+            if (_currentFilter != "None")
+            {
+                _bottomWindow = new BottomWindow();
+                _bottomWindow.SetTheme(_defaultBrush, _selectedBrush);
+                _bottomWindow.ApplyTheme(_defaultBrush, _selectedBrush, _currentThemeMode);
+                _bottomWindow.ApplyFilter(_currentFilter);
+                SyncThemeToBottomWindow();
+                _bottomWindow.ShowWithFade();
+            }
             ApplyThemeMode(_currentThemeMode);
             MouseLeftButtonUp += Window_MouseLeftButtonUp;
+        }
+
+        private void HighlightFilterButton(string tag)
+        {
+            foreach (var child in LogicalTreeHelper.GetChildren(this))
+            {
+                if (child is Border border)
+                {
+                    foreach (var wrap in LogicalTreeHelper.GetChildren(border))
+                    {
+                        if (wrap is WrapPanel panel)
+                        {
+                            foreach (var element in panel.Children)
+                            {
+                                if (element is Button btn && (btn.Tag?.ToString() ?? "") == tag)
+                                {
+                                    _selectedButton = btn;
+                                    btn.Background = _selectedBrush;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -228,6 +269,59 @@ namespace DeskOp
                         _bottomWindow.HideWithFade();
                     }
                 }
+            }
+            SaveLastSettings(); // 🆕
+        }
+
+        private void SaveLastSettings()
+        {
+            try
+            {
+                string path = "theme-settings.json";
+                ThemeSettings settings;
+
+                if (File.Exists(path))
+                {
+                    string existing = File.ReadAllText(path);
+                    settings = JsonSerializer.Deserialize<ThemeSettings>(existing) ?? new ThemeSettings();
+                }
+                else settings = new ThemeSettings();
+
+                settings.DefaultColorHex = ((SolidColorBrush)_defaultBrush).Color.ToString();
+                settings.SelectedColorHex = ((SolidColorBrush)_selectedBrush).Color.ToString();
+                settings.Mode = _currentThemeMode;
+                settings.LastFilter = _currentFilter;
+                settings.MainWindowLeft = this.Left;
+                settings.MainWindowTop = this.Top;
+
+                File.WriteAllText(path, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch
+            {
+                MessageBox.Show("Failed to save filter & window position.", "DeskOp", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void SaveLastFilter(string filter)
+        {
+            try
+            {
+                string path = "theme-settings.json";
+                Dictionary<string, object> settings;
+
+                if (File.Exists(path))
+                {
+                    string existing = File.ReadAllText(path);
+                    settings = JsonSerializer.Deserialize<Dictionary<string, object>>(existing) ?? new();
+                }
+                else settings = new();
+
+                settings["LastFilter"] = filter;
+                File.WriteAllText(path, JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true }));
+            }
+            catch
+            {
+                // Optional: log or ignore
             }
         }
 
