@@ -514,7 +514,7 @@ namespace DeskOp
             Rect rect = GetDynamicSnapRect(_currentSnapZone, iconCount);
             _lastSnapRect = rect;
             _wasSnapped = true;
-            AnimateTo(rect);
+            FadeAndSnapTo(rect);
 
             ApplyOrientationForSnapZone();
         }
@@ -682,7 +682,7 @@ namespace DeskOp
             _wasSnapped = true;
             int iconCount = IconPanel.Children.Count;
             Rect snapRect = GetDynamicSnapRect(_currentSnapZone, iconCount);
-            AnimateTo(snapRect);
+            FadeAndSnapTo(snapRect);
 
             ApplyOrientationForSnapZone();
 
@@ -714,25 +714,26 @@ namespace DeskOp
 
         private void AnimateTo(Rect target)
         {
+            this.BeginAnimation(Window.OpacityProperty, null); // Cancel any fades
+
+            this.Left = target.Left;
+            this.Top = target.Top;
+            this.Width = target.Width;
+            this.Height = target.Height;
+
             if (this.Visibility != Visibility.Visible)
             {
-                this.Left = target.Left;
-                this.Top = target.Top;
-                this.Width = target.Width;
-                this.Height = target.Height;
                 this.Opacity = 1;
                 this.Visibility = Visibility.Visible;
-                return;
             }
+        }
 
+        private void FadeAndSnapTo(Rect target)
+        {
             var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120));
             fadeOut.Completed += (s, e) =>
             {
-                this.Left = target.Left;
-                this.Top = target.Top;
-                this.Width = target.Width;
-                this.Height = target.Height;
-
+                AnimateTo(target); // snap & resize instantly
                 var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180));
                 this.BeginAnimation(Window.OpacityProperty, fadeIn);
             };
