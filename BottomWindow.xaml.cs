@@ -38,6 +38,7 @@ namespace DeskOp
         private const double TILE_TOTAL_WIDTH = TILE_WIDTH;  // ⚠️ Ignore Margin
         private const double TILE_TOTAL_HEIGHT = TILE_HEIGHT;
         private const double EXTRA_PADDING = 30;  // additional buffer to avoid cutoff
+        private string _currentThemeMode = "dark"; // default value
 
         public BottomWindow()
         {
@@ -268,7 +269,7 @@ namespace DeskOp
                         Margin = new Thickness(3),
                         Padding = new Thickness(0),
                         Background = _defaultBrush,
-                        Foreground = Brushes.White,
+                        Foreground = (_currentThemeMode == "light") ? Brushes.Black : Brushes.White,
                         Cursor = Cursors.Hand,
                         BorderThickness = new Thickness(0),
                         HorizontalAlignment = HorizontalAlignment.Center,
@@ -690,14 +691,15 @@ namespace DeskOp
             // AnimateTo already fades in after snapping
         }
 
-        public void ApplyTheme(System.Windows.Media.Brush defaultBg, System.Windows.Media.Brush highlightBg, string mode)
+        public void ApplyTheme(Brush defaultBg, Brush highlightBg, string mode)
         {
             _defaultBrush = defaultBg;
             _highlightBrush = highlightBg;
+            _currentThemeMode = mode; // 💡 store for later use
 
             bool isLight = mode == "light";
             var fg = isLight ? Brushes.Black : Brushes.White;
-            var bg = isLight ? Brushes.White : (Brush)new BrushConverter().ConvertFrom("#FF292B2F")!; // Opaque dark
+            var bg = isLight ? Brushes.White : (Brush)new BrushConverter().ConvertFrom("#FF292B2F")!;
 
             this.Background = Brushes.Transparent;
             RootBorder.Background = bg;
@@ -706,7 +708,7 @@ namespace DeskOp
             {
                 if (child is Button btn)
                 {
-                    btn.Background = bg; // Match RootBorder
+                    btn.Background = bg;
                     btn.Foreground = fg;
                 }
             }
