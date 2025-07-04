@@ -398,16 +398,9 @@ namespace DeskOp
                 double width = Math.Min(desired.Width + chromePadding, SystemParameters.PrimaryScreenWidth - 60);
                 double height = Math.Min(desired.Height + chromePadding, SystemParameters.PrimaryScreenHeight - 60);
 
-                // 🧠 If not visible, skip animation and set size instantly
-                if (this.Visibility != Visibility.Visible || this.Opacity <= 0)
-                {
-                    this.Width = width;
-                    this.Height = height;
-                }
-                else
-                {
-                    AnimateTo(new Rect(this.Left, this.Top, width, height));
-                }
+                // ✅ Just update size directly here — skip animation
+                this.Width = width;
+                this.Height = height;
             }, DispatcherPriority.Loaded);
         }
 
@@ -644,11 +637,17 @@ namespace DeskOp
             }
 
             RecalculateGridLayout();
-            ResizeToFit(); // Dynamically resizes window to fit icons
+            ResizeToFit();
 
             _wasSnapped = true;
+            int iconCount = IconPanel.Children.Count;
+            Rect snapRect = GetDynamicSnapRect(_currentSnapZone, iconCount);
+            AnimateTo(snapRect);
+
             ApplyOrientationForSnapZone();
-            this.ShowWithFade();
+
+            // ❌ Don't call ShowWithFade() here
+            // AnimateTo already fades in after snapping
         }
 
         public void ApplyTheme(System.Windows.Media.Brush defaultBg, System.Windows.Media.Brush highlightBg, string mode)
@@ -675,16 +674,25 @@ namespace DeskOp
 
         private void AnimateTo(Rect target)
         {
+            if (this.Visibility != Visibility.Visible)
+            {
+                this.Left = target.Left;
+                this.Top = target.Top;
+                this.Width = target.Width;
+                this.Height = target.Height;
+                this.Opacity = 1;
+                this.Visibility = Visibility.Visible;
+                return;
+            }
+
             var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(120));
             fadeOut.Completed += (s, e) =>
             {
-                // Snap instantly after fade out
                 this.Left = target.Left;
                 this.Top = target.Top;
                 this.Width = target.Width;
                 this.Height = target.Height;
 
-                // Fade back in
                 var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180));
                 this.BeginAnimation(Window.OpacityProperty, fadeIn);
             };
