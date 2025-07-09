@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace DeskOp
 {
@@ -23,6 +24,7 @@ namespace DeskOp
             SetProcessDPIAware();
 
             base.OnStartup(e);
+            EnableStartup();
 
             this.DispatcherUnhandledException += (s, args) =>
             {
@@ -31,6 +33,25 @@ namespace DeskOp
             };
 
             SetupTrayIcon();
+        }
+        private void EnableStartup()
+        {
+            string appName = "DeskOp";
+            string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+
+            RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key.GetValue(appName) == null)
+            {
+                key.SetValue(appName, $"\"{exePath}\"");
+            }
+        }
+
+        private void DisableStartup()
+        {
+            string appName = "DeskOp";
+            using RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key.GetValue(appName) != null)
+                key.DeleteValue(appName);
         }
 
         private void SetupTrayIcon()

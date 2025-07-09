@@ -636,11 +636,19 @@ namespace DeskOp
             switch (zone)
             {
                 case SnapZone.Left:
-                    snapRect = new Rect(padding, screenHeight * 0.1, finalWidth, finalHeight);
+                    snapRect = new Rect(
+                        padding,                                 // Left edge with padding
+                        (screenHeight - finalHeight) / 2,        // ✅ Vertically centered
+                        finalWidth,
+                        finalHeight);
                     break;
 
                 case SnapZone.Right:
-                    snapRect = new Rect(screenWidth - finalWidth - padding, screenHeight * 0.1, finalWidth, finalHeight);
+                    snapRect = new Rect(
+                        screenWidth - finalWidth - padding,      // Right edge with padding
+                        (screenHeight - finalHeight) / 2,        // ✅ Vertically centered
+                        finalWidth,
+                        finalHeight);
                     break;
 
                 case SnapZone.BottomCenter:
