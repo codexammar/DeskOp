@@ -391,7 +391,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "filters.json";
+                string path = PathHelper.GetAppDataPath("filters.json");
                 string json = File.ReadAllText(path);
                 _filters = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json)!;
             }
@@ -563,7 +563,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "theme-settings.json";
+                string path = PathHelper.GetAppDataPath("theme-settings.json");
                 Dictionary<string, object> settings;
 
                 if (File.Exists(path))

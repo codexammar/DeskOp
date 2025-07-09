@@ -10,7 +10,7 @@ namespace DeskOp
 {
     public partial class SettingsWindow : Window
     {
-        private readonly string settingsPath = "theme-settings.json";
+        private readonly string settingsPath = PathHelper.GetAppDataPath("theme-settings.json");
         private ThemeSettings currentSettings = new();
         public Action<Brush>? OnBackgroundThemeSelected;
         public Action<Brush>? OnSelectedColorChanged;

@@ -277,7 +277,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "theme-settings.json";
+                string path = PathHelper.GetAppDataPath("theme-settings.json");
                 ThemeSettings settings;
 
                 if (File.Exists(path))
@@ -306,7 +306,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "theme-settings.json";
+                string path = PathHelper.GetAppDataPath("theme-settings.json");
                 Dictionary<string, object> settings;
 
                 if (File.Exists(path))

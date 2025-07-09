@@ -22,6 +22,9 @@ TestResult*/
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/Dotnet.gitignore
 
+# Ignore build outputs
+InstallerBuild/
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/

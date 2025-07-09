@@ -24,6 +24,7 @@ namespace DeskOp
             SetProcessDPIAware();
 
             base.OnStartup(e);
+            PathHelper.EnsureDefaults();
             EnableStartup();
 
             this.DispatcherUnhandledException += (s, args) =>
@@ -37,7 +38,7 @@ namespace DeskOp
         private void EnableStartup()
         {
             string appName = "DeskOp";
-            string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string exePath = AppContext.BaseDirectory + "DeskOp.exe";
 
             RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
             if (key.GetValue(appName) == null)
