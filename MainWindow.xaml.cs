@@ -94,33 +94,21 @@ namespace DeskOp
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            // 1) Make MainWindow top‐most (above all normal windows)
+            this.Topmost = true;
 
+            // 2) Match BottomWindow’s sizing strategy
+            this.SizeToContent = SizeToContent.Manual;
+
+            // 3) Tool-window + no-activate flags
+            var hwnd = new WindowInteropHelper(this).Handle;
             int exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
             exStyle |= WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE;
             SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
 
-            bool wallpaperEngineRunning = IsWallpaperEngineRunning();
-            if (!wallpaperEngineRunning)
-            {
-                IntPtr progman = FindWindow("Progman", null);
-                if (progman != IntPtr.Zero)
-                    SetParent(hwnd, progman);
-            }
-
+            // 4) Push to bottom of the *top-most* group
             SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
-        }
-
-        private bool IsWallpaperEngineRunning()
-        {
-            foreach (var p in Process.GetProcesses())
-            {
-                string name = p.ProcessName.ToLower();
-                if (name.Contains("wallpaper32") || name.Contains("wallpaper64"))
-                    return true;
-            }
-            return false;
         }
 
         private void OpenSettings_Click(object sender, RoutedEventArgs e)
@@ -386,9 +374,6 @@ namespace DeskOp
 
         [DllImport("user32.dll")]
         private static extern IntPtr FindWindow(string lpClassName, string? lpWindowName);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
 
         [DllImport("user32.dll")]
         private static extern int GetWindowLong(IntPtr hWnd, int nIndex);
