@@ -10,7 +10,7 @@ namespace DeskOp
 {
     public partial class SettingsWindow : Window
     {
-        private readonly string settingsPath = "theme-settings.json";
+        private readonly string settingsPath = PathHelper.GetSettingsPath();
         private ThemeSettings currentSettings = new();
         public Action<Brush>? OnBackgroundThemeSelected;
         public Action<Brush>? OnSelectedColorChanged;
@@ -20,6 +20,7 @@ namespace DeskOp
 
         public SettingsWindow()
         {
+            PathHelper.EnsureAppDataFolderAndDefaults();
             InitializeComponent();
             LoadSettings();
         }
@@ -126,15 +127,5 @@ namespace DeskOp
                 MessageBox.Show($"Failed to save theme settings: {ex.Message}", "DeskOp", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
-    }
-    public class ThemeSettings
-    {
-        public string DefaultColorHex { get; set; } = "#292B2F";
-        public string SelectedColorHex { get; set; } = "#2ECC71";
-        public string Mode { get; set; } = "dark";
-        public string SnapZone { get; set; } = "Right";
-        public string LastFilter { get; set; } = "None";
-        public double MainWindowLeft { get; set; } = 100;
-        public double MainWindowTop { get; set; } = 100;
     }
 }

@@ -126,8 +126,13 @@ namespace DeskOp
         {
             try
             {
-                string json = File.ReadAllText("theme-settings.json");
+                string path = PathHelper.GetSettingsPath(); // ✅ Use AppData path
+                if (!File.Exists(path))
+                    return SnapZone.Right;
+
+                string json = File.ReadAllText(path);
                 var doc = JsonDocument.Parse(json);
+
                 if (doc.RootElement.TryGetProperty("SnapZone", out var zoneProp))
                 {
                     if (Enum.TryParse<SnapZone>(zoneProp.GetString(), ignoreCase: true, out var zone))
@@ -391,7 +396,8 @@ namespace DeskOp
         {
             try
             {
-                string path = "filters.json";
+                PathHelper.EnsureAppDataFolderAndDefaults();
+                string path = PathHelper.GetFiltersPath();
                 string json = File.ReadAllText(path);
                 _filters = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json)!;
             }
@@ -563,7 +569,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "theme-settings.json";
+                string path = PathHelper.GetSettingsPath();
                 Dictionary<string, object> settings;
 
                 if (File.Exists(path))

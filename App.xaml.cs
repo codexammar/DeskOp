@@ -24,6 +24,7 @@ namespace DeskOp
             SetProcessDPIAware();
 
             base.OnStartup(e);
+            PathHelper.EnsureAppDataFolderAndDefaults();
             EnableStartup();
 
             this.DispatcherUnhandledException += (s, args) =>

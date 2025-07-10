@@ -28,11 +28,13 @@ namespace DeskOp
 
         public MainWindow()
         {
-            if (File.Exists("theme-settings.json"))
+            PathHelper.EnsureAppDataFolderAndDefaults();
+            string settingsPath = PathHelper.GetSettingsPath();
+            if (File.Exists(settingsPath))
             {
                 try
                 {
-                    var json = File.ReadAllText("theme-settings.json");
+                    var json = File.ReadAllText(settingsPath);
                     var settings = JsonSerializer.Deserialize<ThemeSettings>(json);
 
                     if (settings is not null)
@@ -265,7 +267,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "theme-settings.json";
+                string path = PathHelper.GetSettingsPath();
                 ThemeSettings settings;
 
                 if (File.Exists(path))
@@ -294,7 +296,7 @@ namespace DeskOp
         {
             try
             {
-                string path = "theme-settings.json";
+                string path = PathHelper.GetSettingsPath();
                 Dictionary<string, object> settings;
 
                 if (File.Exists(path))
@@ -345,6 +347,7 @@ namespace DeskOp
         private void Window_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
             SnapToHorizontalCenterIfClose();
+            SaveLastSettings();
         }
 
         private void SnapToHorizontalCenterIfClose()
